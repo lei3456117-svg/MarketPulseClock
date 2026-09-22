@@ -118,12 +118,15 @@ function saveWindowPosition() {
 }
 
 function createWindow() {
-  // 默认启动时隐藏 Dock 栏图标（纯净桌面组件）
-  if (process.platform === 'darwin' && app.dock) {
+  const isMac = process.platform === 'darwin';
+  const isWin = process.platform === 'win32';
+
+  // 默认启动时隐藏 Dock 栏/任务栏图标（纯净桌面挂件组件）
+  if (isMac && app.dock) {
     app.dock.hide();
   }
 
-  // 默认启动菜单栏图标
+  // 默认启动系统托盘图标
   createTray();
 
   const savedPos = loadSavedPosition();
@@ -135,6 +138,7 @@ function createWindow() {
     hasShadow: true,
     resizable: false,
     alwaysOnTop: false,
+    skipTaskbar: isWin ? true : false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -195,15 +199,23 @@ ipcMain.on('set-login-item-settings', (event, openAtLogin) => {
   event.reply('login-item-settings-changed', !!openAtLogin);
 });
 
-// Dock 栏显隐
+// Dock 栏 / 任务栏显隐
 ipcMain.handle('get-dock-status', () => {
-  return app.dock ? app.dock.isVisible() : false;
+  if (process.platform === 'darwin' && app.dock) {
+    return app.dock.isVisible();
+  }
+  if (mainWindow) {
+    return !mainWindow.isSkipTaskbar();
+  }
+  return false;
 });
 
 ipcMain.on('set-dock-status', (event, show) => {
   if (process.platform === 'darwin' && app.dock) {
     if (show) app.dock.show();
     else app.dock.hide();
+  } else if (mainWindow) {
+    mainWindow.setSkipTaskbar(!show);
   }
   event.reply('dock-status-changed', show);
 });

@@ -587,13 +587,17 @@ function updateSysMetrics() {
   if (ramDetail) ramDetail.textContent = `${(usedMem / 1073741824).toFixed(1)} / ${(totalMem / 1073741824).toFixed(1)} GB`;
   renderPixelBar('ramPixelBar', ramPercent, 26);
 
-  // 磁盘剩余容量计算 (fs.statfsSync)
+  // 磁盘剩余容量计算 (跨平台自适应)
   let diskPercent = 22;
   let diskFreeGB = '720.0';
   let diskTotalGB = '1000.0';
+  const isWin = typeof process !== 'undefined' && process.platform === 'win32';
+  const diskPath = isWin ? (process.env.SystemDrive || 'C:\\') : '/';
+  const diskName = isWin ? `本地磁盘 (${process.env.SystemDrive || 'C:'})` : 'Macintosh HD';
+
   if (fs && fs.statfsSync) {
     try {
-      const stats = fs.statfsSync('/');
+      const stats = fs.statfsSync(diskPath);
       const total = (stats.blocks * stats.bsize) / (1024**3);
       const free = (stats.bfree * stats.bsize) / (1024**3);
       const used = total - free;
@@ -604,7 +608,7 @@ function updateSysMetrics() {
   }
   const diskLabel = document.getElementById('diskLabel');
   const diskDetail = document.getElementById('diskDetail');
-  if (diskLabel) diskLabel.textContent = `Macintosh HD 存储: ${diskPercent}%`;
+  if (diskLabel) diskLabel.textContent = `${diskName} 存储: ${diskPercent}%`;
   if (diskDetail) diskDetail.textContent = `剩 ${diskFreeGB} GB (共 ${diskTotalGB} GB)`;
   renderPixelBar('diskPixelBar', diskPercent, 26);
 
@@ -826,6 +830,14 @@ function initSettings() {
   const autoLaunchToggle = document.getElementById('autoLaunchToggle');
   const dockToggle = document.getElementById('dockToggle');
   const trayToggle = document.getElementById('trayToggle');
+
+  // Windows 平台专属文案自适应
+  if (typeof process !== 'undefined' && process.platform === 'win32') {
+    const dockLabel = document.getElementById('dockLabelText');
+    if (dockLabel) dockLabel.textContent = '在 Windows 任务栏显示图标';
+    const trayLabel = document.getElementById('trayLabelText');
+    if (trayLabel) trayLabel.textContent = '在任务栏系统托盘显示图标';
+  }
 
   if (ipcRenderer) {
     // 1. 开机自启

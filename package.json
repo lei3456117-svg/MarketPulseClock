@@ -8,7 +8,8 @@
     "dist": "electron-builder --mac dmg --arm64",
     "dist:arm64": "electron-builder --mac dmg --arm64",
     "dist:x64": "electron-builder --mac dmg --x64",
-    "dist:all": "electron-builder --mac dmg --arm64 --x64"
+    "dist:all": "electron-builder --mac dmg --arm64 --x64",
+    "dist:win": "electron-builder --win nsis portable --x64"
   },
   "build": {
     "appId": "com.antigravity.pixelclock",
@@ -22,6 +23,19 @@
         "dmg",
         "zip"
       ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MarketPulseClock"
     },
     "dmg": {
       "contents": [
