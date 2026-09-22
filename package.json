@@ -5,7 +5,10 @@
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --mac dmg --arm64"
+    "dist": "electron-builder --mac dmg --arm64",
+    "dist:arm64": "electron-builder --mac dmg --arm64",
+    "dist:x64": "electron-builder --mac dmg --x64",
+    "dist:all": "electron-builder --mac dmg --arm64 --x64"
   },
   "build": {
     "appId": "com.antigravity.pixelclock",
