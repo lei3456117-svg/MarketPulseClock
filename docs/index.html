@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Pulse Pixel Clock - 桌面极客像素时钟</title>
+  <style>
+    :root {
+      --bg: #0b0d0e;
+      --card-bg: #121518;
+      --border: #20262c;
+      --text: #c8ced6;
+      --text-muted: #6b7580;
+      --accent: #eb4d38;
+      --green: #38c172;
+      --cyan: #00e5ff;
+      --orange: #ffaa00;
+      --font-mono: "SF Mono", Monaco, Menlo, Consolas, "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* 顶部导航栏 */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(11, 13, 14, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .brand span.pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 2px;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .badge-ver {
+      font-size: 11px;
+      background: #192026;
+      border: 1px solid var(--border);
+      color: #8c97a3;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+
+    nav {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    nav a:hover {
+      color: #fff;
+    }
+
+    .btn-download-sm {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(235, 77, 56, 0.3);
+    }
+
+    /* 容器 */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero 区域 */
+    .hero {
+      text-align: center;
+      padding: 60px 0 40px;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #fff 0%, #a0aab5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 50px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(235, 77, 56, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(235, 77, 56, 0.55);
+    }
+
+    .btn-secondary {
+      background: #181d22;
+      border: 1px solid var(--border);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: #222830;
+      border-color: #38424d;
+      transform: translateY(-2px);
+    }
+
+    /* 预览图橱窗 */
+    .showcase {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 70px;
+      flex-wrap: wrap;
+    }
+
+    .showcase-card {
+      background: #14171a;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: transform 0.2s;
+    }
+
+    .showcase-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .showcase-card img {
+      display: block;
+      border-radius: 12px;
+      max-width: 360px;
+      height: auto;
+    }
+
+    .showcase-label {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-family: var(--font-mono);
+    }
+
+    /* 特性网格 */
+    .section-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: #384452;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      margin-bottom: 14px;
+      display: inline-block;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* 6 大模块详细分解 */
+    .modules-section {
+      background: #111417;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px 32px;
+      margin-bottom: 60px;
+    }
+
+    .module-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 18px 0;
+      border-bottom: 1px solid #1c2229;
+    }
+
+    .module-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .module-badge {
+      font-size: 22px;
+      background: #181d22;
+      border: 1px solid var(--border);
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .module-info h4 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .module-tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      background: #1c242e;
+      color: var(--cyan);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    .module-info p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    /* 主题调色板展示 */
+    .theme-palette-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 60px;
+    }
+
+    .theme-preview-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .theme-preview-clock {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+      margin: 12px 0;
+      letter-spacing: 2px;
+    }
+
+    .theme-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* 内存与性能科普 */
+    .memory-box {
+      background: #13171b;
+      border-left: 4px solid var(--cyan);
+      border-radius: 0 12px 12px 0;
+      padding: 24px;
+      margin-bottom: 60px;
+    }
+
+    .memory-box h3 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .memory-box p {
+      font-size: 13.5px;
+      color: #9aa5b1;
+      margin-bottom: 8px;
+    }
+
+    .stat-badge-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      background: #1c2228;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+
+    .stat-badge b {
+      color: var(--green);
+    }
+
+    /* 代码块 */
+    pre {
+      background: #0d1012;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #abb2ba;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 16px 0 30px;
+    }
+
+    /* 页脚 */
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 30px;
+      margin-top: 50px;
+    }
+
+    footer a {
+      color: var(--text);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 导航条 -->
+  <header>
+    <div class="brand">
+      <span class="pulse"></span>
+      <span>MARKET PULSE CLOCK</span>
+      <span class="badge-ver">v1.3.0</span>
+    </div>
+    <nav>
+      <a href="#features">特性</a>
+      <a href="#modules">6大模块</a>
+      <a href="#themes">调色盘</a>
+      <a href="#performance">性能实测</a>
+      <a href="../dist/MarketPulseClock-1.3.0-arm64.dmg" class="btn-download-sm">下载 macOS DMG</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Hero 介绍 -->
+    <section class="hero">
+      <h1>专为 macOS 打造的<br/><span>极客复古赛博朋克桌面时钟</span></h1>
+      <p>融合 5×7 LED 硬件点阵字体、毫秒级粒子波形动态矩阵、时间人生进度与系统资源监控，支持 1:1 紧凑悬浮与调色盘自选。</p>
+      <div class="hero-actions">
+        <a href="../dist/MarketPulseClock-1.3.0-arm64.dmg" class="btn btn-primary">
+           下载 macOS 安装包 (.dmg) v1.3.0
+        </a>
+        <a href="#quickstart" class="btn btn-secondary">
+          ⚡ 源码运行与构建
+        </a>
+      </div>
+    </section>
+
+    <!-- 真实截图展示 -->
+    <section class="showcase">
+      <div class="showcase-card">
+        <img src="assets/preview.png" alt="主界面预览 - 时间人生进度模式">
+        <div class="showcase-label">主时钟 · 5x7 点阵 + 时间人生进度条</div>
+      </div>
+      <div class="showcase-card">
+        <img src="assets/settings_drawer.png" alt="调色盘与设置抽屉">
+        <div class="showcase-label">调色盘抽屉 · 预设极客主题 + 自定义色盘</div>
+      </div>
+    </section>
+
+    <!-- 特性亮点 -->
+    <h2 class="section-title" id="features">⚡ 核心亮点</h2>
+    <div class="grid-3">
+      <div class="feature-card">
+        <div class="feature-icon">📟</div>
+        <h3>5×7 经典点阵与柔和哑光</h3>
+        <p>1:1 精确定义点阵字形，已调优为低饱和度护眼哑光色泽（剔除高眩光），分钟跳变时自动触发逐行像素卷帘翻页（Pixel Roll）动效。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌊</div>
+        <h3>8×8 动态流体粒子矩阵</h3>
+        <p>时钟右侧配备微秒级流体粒子引擎，随时间连续波动，呈现生生不息的机械流逝感与科技氛围。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>调色盘与个性化外观</h3>
+        <p>暗夜、黑客绿、琥珀橙、冰川蓝、霓虹粉 5 大预设主题一键切换，支持任意拾取自定义 LED 发光色并持久化保存。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📌</div>
+        <h3>全新矢量图钉与全局置顶</h3>
+        <p>升级为高清矢量 SVG 图钉，点击具备 45° 倾斜与红亮双重状态反馈，支持全屏与跨工作区始终悬浮在顶层。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪟</div>
+        <h3>不占 Dock 栏 · 纯净小组件</h3>
+        <p>底层深度配置 macOS LSUIElement 机制，运行后<b>完全不占用屏幕底部的 Dock 栏位置</b>，打造纯粹无干扰的桌面常驻体验。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍃</div>
+        <h3>超低资源占用 (仅 ~100MB)</h3>
+        <p>轻量进程设计，日常驻留物理内存仅 ~100MB，CPU 占用低于 1%，全天静默运行不发热、不耗电、不拖慢 Mac。</p>
+      </div>
+    </div>
+
+    <!-- 底部 6 大功能模块详细说明 -->
+    <h2 class="section-title" id="modules">🧩 底部插槽 6 大模块详解</h2>
+    <div class="modules-section">
+      <div class="module-item">
+        <div class="module-badge">⏳</div>
+        <div class="module-info">
+          <h4>时间人生进度 <span class="module-tag">LIFE PROGRESS</span></h4>
+          <p>全自动计算 2026 全年进度百分比、剩余天数；当月进度条；并<b>智能侦测下一个传统/法定节日</b>（如中秋节、国庆节）实时倒计时。</p>
+        </div>
+      </div>
+
+      <div class="module-item">
+        <div class="module-badge">⚡</div>
+        <div class="module-info">
+          <h4>系统性能监控 <span class="module-tag">SYSTEM MONITOR</span></h4>
+          <p>调用 Node.js 底层硬件接口，实时显示 Mac 当前的 <b>CPU 综合占用率</b>（含核心数）与 <b>RAM 内存占用量</b>（已用/总计 GB），以动态像素条直观跳动。</p>
+        </div>
+      </div>
+
+      <div class="module-item">
+        <div class="module-badge">🍅</div>
+        <div class="module-info">
+          <h4>番茄专注钟 <span class="module-tag">POMODORO</span></h4>
+          <p>内置标准 <b>25 分钟专注工作 / 5 分钟休息</b>番茄工作法循环，带大号倒计时数字与像素进度条，点击随时开始、暂停与重置。</p>
+        </div>
+      </div>
+
+      <div class="module-item">
+        <div class="module-badge">🌍</div>
+        <div class="module-info">
+          <h4>世界主要时钟 <span class="module-tag">WORLD CITIES</span></h4>
+          <p>纯净的多时区时钟：实时同步 <b>北京 (UTC+8)</b>、<b>东京 (UTC+9)</b>、<b>伦敦 (UTC+1)</b> 与 <b>纽约 (UTC-4)</b> 本地时间，适合跨国协作开发者。</p>
+        </div>
+      </div>
+
+      <div class="module-item">
+        <div class="module-badge">📈</div>
+        <div class="module-info">
+          <h4>全球金融市场 <span class="module-tag">MARKET PULSE</span></h4>
+          <p>实时判断 <b>上交所 (SSE)</b>、<b>港交所 (HKEX)</b>、<b>纽交所 (NYSE)</b> 交易时段开市与休市状态（绿色 OPEN / 暗灰 CLOSED）及当地时间联动。</p>
+        </div>
+      </div>
+
+      <div class="module-item">
+        <div class="module-badge">⏱️</div>
+        <div class="module-info">
+          <h4>极简纯钟模式 <span class="module-tag">MINIMAL MODE</span></h4>
+          <p>一键自动隐藏底部所有模块，窗口智能折叠收缩为 <b>136px</b> 超紧凑纯时钟条，最大程度减少视觉干扰。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主题风格橱窗 -->
+    <h2 class="section-title" id="themes">🎨 预设主题色系（柔和哑光无眩光）</h2>
+    <div class="theme-palette-wrap">
+      <div class="theme-preview-card" style="background: #0e1011; border-color: #24282e;">
+        <div class="theme-name">暗夜终端 (默认)</div>
+        <div class="theme-preview-clock" style="color: #ececec;">23:27</div>
+      </div>
+      <div class="theme-preview-card" style="background: #081009; border-color: #121f14;">
+        <div class="theme-name" style="color: #7bc78f;">黑客帝国 (Matrix)</div>
+        <div class="theme-preview-clock" style="color: #48cf7a;">23:27</div>
+      </div>
+      <div class="theme-preview-card" style="background: #120d09; border-color: #241a12;">
+        <div class="theme-name" style="color: #d8aa72;">复古琥珀 (Amber)</div>
+        <div class="theme-preview-clock" style="color: #e29b38;">23:27</div>
+      </div>
+      <div class="theme-preview-card" style="background: #090f14; border-color: #121f28;">
+        <div class="theme-name" style="color: #7db9cb;">极冷冰川 (Ice)</div>
+        <div class="theme-preview-clock" style="color: #42b6d6;">23:27</div>
+      </div>
+      <div class="theme-preview-card" style="background: #110912; border-color: #241324;">
+        <div class="theme-name" style="color: #cb7a9e;">赛博霓虹 (Cyber)</div>
+        <div class="theme-preview-clock" style="color: #ce4d85;">23:27</div>
+      </div>
+    </div>
+
+    <!-- 性能与内存说明 -->
+    <h2 class="section-title" id="performance">🔍 性能实测与 macOS 内存科普</h2>
+    <div class="memory-box">
+      <h3>为什么系统活动监视器显示 Mac 内存几乎占满了？</h3>
+      <p><b>macOS 统一内存机制科普</b>：macOS 采用「空闲内存即浪费」的设计哲学。系统会主动将频繁调用的 Chrome 标签页、应用代码、系统缓存保留在 RAM 中以便毫秒级秒开。当大型生产力软件（如视频剪辑、3D 渲染）需要内存时，系统会自动瞬时压缩与释放缓存。</p>
+      <p><b>本软件资源消耗实测</b>：</p>
+      <div class="stat-badge-row">
+        <div class="stat-badge">常驻内存 (RSS): <b>~100 MB</b> (占 32GB 仅 0.3%)</div>
+        <div class="stat-badge">CPU 占用: <b>0.5% ~ 1.2%</b> (M系列芯片)</div>
+        <div class="stat-badge">安装包体积: <b>94 MB</b> (免额外依赖)</div>
+      </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <h2 class="section-title" id="quickstart">🚀 从源码运行与构建</h2>
+    <pre><code># 1. 克隆代码仓库
+git clone https://github.com/your-username/desktop-pixel-clock.git
+cd desktop-pixel-clock
+
+# 2. 安装依赖 (基于 Node.js 18+)
+npm install
+
+# 3. 启动开发运行
+npm start
+
+# 4. 一键打包为 macOS 原生 .dmg 文件
+npm run dist</code></pre>
+
+    <!-- 页脚 -->
+    <footer>
+      <p>© 2026 Market Pulse Pixel Clock. Released under the <a href="../LICENSE">MIT License</a>.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Clock Widget</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="widget-card" id="widgetCard">
+    <!-- 顶部状态栏 -->
+    <div class="widget-header">
+      <div class="header-left">
+        <span class="title">MARKET PULSE</span>
+        <span class="version-badge">v1.3.0</span>
+      </div>
+      <div class="header-controls">
+        <button id="themeBtn" class="control-btn" title="调色盘与设置">🎨</button>
+        <button id="pinBtn" class="control-btn pin-btn" title="点击始终置顶">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+          </svg>
+        </button>
+        <button id="minBtn" class="control-btn" title="最小化">─</button>
+        <button id="closeBtn" class="control-btn" title="关闭">✕</button>
+        <div class="pulse-indicator"></div>
+      </div>
+    </div>
+
+    <!-- 时钟与流动矩阵 -->
+    <div class="clock-matrix-row">
+      <canvas id="clockCanvas" width="230" height="65" class="pixel-clock-canvas"></canvas>
+      <canvas id="matrixCanvas" width="72" height="65" class="dynamic-matrix-canvas"></canvas>
+    </div>
+
+    <!-- 中部：日期与模块切换导航 -->
+    <div class="mid-bar" id="midBar">
+      <div id="dateTimezone" class="date-timezone">MON, SEP 21 · CST +8</div>
+      <div class="module-switcher">
+        <button id="prevModuleBtn" class="module-nav-btn" title="上一个模块">‹</button>
+        <span id="currentModuleName" class="module-title" title="点击切换模块">⏳ 时间进度</span>
+        <button id="nextModuleBtn" class="module-nav-btn" title="下一个模块">›</button>
+      </div>
+    </div>
+
+    <!-- 模块内容插槽区域 -->
+    <div class="module-container" id="moduleContainer">
+      <!-- 模块 1：时间人生进度 -->
+      <div id="modLife" class="module-view active">
+        <div class="progress-container">
+          <div class="progress-header">
+            <span id="yearProgressLabel">2026 年进度: 72.3%</span>
+            <span id="yearDaysLeft">剩 101 天</span>
+          </div>
+          <div class="pixel-bar" id="yearPixelBar"></div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-header">
+            <span id="monthProgressLabel">9月进度: 70.0%</span>
+            <span id="monthDaysLeft">剩 9 天</span>
+          </div>
+          <div class="pixel-bar" id="monthPixelBar"></div>
+        </div>
+
+        <div class="stat-row" style="margin-top: 2px;">
+          <span class="stat-label">🎉 下一个节日</span>
+          <span id="nextHolidayText" class="stat-value" style="color: #e5a038;">中秋节 · 3天后 (09-25)</span>
+        </div>
+      </div>
+
+      <!-- 模块 2：系统性能与硬件监控 (CPU / 内存 / 磁盘剩余容量) -->
+      <div id="modSys" class="module-view">
+        <div class="progress-container">
+          <div class="progress-header">
+            <span id="cpuLabel">CPU 占用: 15%</span>
+            <span id="cpuCores">8 Cores</span>
+          </div>
+          <div class="pixel-bar" id="cpuPixelBar"></div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-header">
+            <span id="ramLabel">内存占用: 64%</span>
+            <span id="ramDetail">10.2 / 16.0 GB</span>
+          </div>
+          <div class="pixel-bar" id="ramPixelBar"></div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-header">
+            <span id="diskLabel">Macintosh HD 存储: 22%</span>
+            <span id="diskDetail">剩 720.8 GB</span>
+          </div>
+          <div class="pixel-bar" id="diskPixelBar"></div>
+        </div>
+
+        <div class="stat-row" style="margin-top: 1px;">
+          <span class="stat-label">⚡ 运行时间</span>
+          <span id="uptimeText" class="stat-value">0d 0h</span>
+        </div>
+      </div>
+
+      <!-- 模块 3：番茄专注钟 -->
+      <div id="modPomo" class="module-view">
+        <div class="pomo-wrap">
+          <div class="pomo-timer-row">
+            <span id="pomoDisplay" class="pomo-time-large">25:00</span>
+            <div class="pomo-actions">
+              <button id="pomoStartBtn" class="pomo-btn">▶ 开始</button>
+              <button id="pomoResetBtn" class="pomo-btn">↺ 重置</button>
+              <button id="pomoModeBtn" class="pomo-btn">5m 休息</button>
+            </div>
+          </div>
+          <div class="pixel-bar" id="pomoPixelBar"></div>
+        </div>
+      </div>
+
+      <!-- 模块 4：世界时钟 -->
+      <div id="modWorld" class="module-view">
+        <div class="market-item" style="grid-template-columns: 80px 1fr 60px;">
+          <span class="market-code">BEIJING</span>
+          <span class="market-name">北京 UTC+8</span>
+          <span id="worldTimeBeijing" class="market-time">--:--</span>
+        </div>
+        <div class="market-item" style="grid-template-columns: 80px 1fr 60px;">
+          <span class="market-code">TOKYO</span>
+          <span class="market-name">东京 UTC+9</span>
+          <span id="worldTimeTokyo" class="market-time">--:--</span>
+        </div>
+        <div class="market-item" style="grid-template-columns: 80px 1fr 60px;">
+          <span class="market-code">LONDON</span>
+          <span class="market-name">伦敦 UTC+1</span>
+          <span id="worldTimeLondon" class="market-time">--:--</span>
+        </div>
+      </div>
+
+      <!-- 模块 5：金融市场 -->
+      <div id="modMarket" class="module-view">
+        <div class="market-item">
+          <div class="market-code-wrap">
+            <span class="market-dot"></span>
+            <span class="market-code">SSE</span>
+          </div>
+          <span class="market-name">上海</span>
+          <span id="sseStatus" class="market-status closed">CLOSED</span>
+          <span id="sseTime" class="market-time">--:--</span>
+        </div>
+        <div class="market-item">
+          <div class="market-code-wrap">
+            <span class="market-dot"></span>
+            <span class="market-code">HKEX</span>
+          </div>
+          <span class="market-name">香港</span>
+          <span id="hkexStatus" class="market-status closed">CLOSED</span>
+          <span id="hkexTime" class="market-time">--:--</span>
+        </div>
+        <div class="market-item">
+          <div class="market-code-wrap">
+            <span class="market-dot"></span>
+            <span class="market-code">NYSE</span>
+          </div>
+          <span class="market-name">纽约</span>
+          <span id="nyseStatus" class="market-status closed">CLOSED</span>
+          <span id="nyseTime" class="market-time">--:--</span>
+        </div>
+      </div>
+
+      <!-- 模块 6：极简模式 (空内容，窗口折叠) -->
+      <div id="modMinimal" class="module-view"></div>
+    </div>
+
+    <!-- 调色盘与设置抽屉 (🎨) -->
+    <div class="settings-drawer" id="settingsDrawer">
+      <div class="settings-header">
+        <span>⚙️ 外观与系统常驻设置</span>
+        <button id="closeSettingsBtn" class="control-btn">✕</button>
+      </div>
+      <div class="settings-body">
+        <div>
+          <span style="color: var(--text-dim); display: block; margin-bottom: 6px;">预设主题风格</span>
+          <div class="theme-options">
+            <div class="theme-chip" data-theme="dark" style="background: #0e1011; color: #ececec;">暗夜</div>
+            <div class="theme-chip" data-theme="matrix" style="background: #081009; color: #48cf7a;">黑客</div>
+            <div class="theme-chip" data-theme="amber" style="background: #120d09; color: #e29b38;">琥珀</div>
+            <div class="theme-chip" data-theme="ice" style="background: #090f14; color: #42b6d6;">冰川</div>
+            <div class="theme-chip" data-theme="cyber" style="background: #110912; color: #ce4d85;">霓虹</div>
+          </div>
+        </div>
+
+        <div class="custom-color-row">
+          <span>面板背景色</span>
+          <input type="color" id="customBgColor" value="#0e1011">
+        </div>
+
+        <div class="custom-color-row">
+          <span>点阵 LED 发光色</span>
+          <input type="color" id="customLedColor" value="#ececec">
+        </div>
+
+        <div class="custom-color-row">
+          <span>默认启动模块</span>
+          <select id="defaultModSelect" style="background: #14181c; color: #c4cad1; border: 1px solid #283038; border-radius: 4px; padding: 2px 6px; font-size: 10px;">
+            <option value="0">⏳ 时间人生进度</option>
+            <option value="1">⚡ 系统性能监控</option>
+            <option value="2">🍅 番茄专注钟</option>
+            <option value="3">🌍 世界主要时钟</option>
+            <option value="4">📈 全球金融市场</option>
+            <option value="5">⏱️ 极简纯钟模式</option>
+          </select>
+        </div>
+
+        <div style="border-top: 1px solid #1c2126; margin-top: 4px; padding-top: 8px;">
+          <span style="color: var(--text-dim); display: block; margin-bottom: 6px; font-size: 10px;">系统常驻偏好</span>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="display: flex; align-items: center; gap: 7px; cursor: pointer;">
+              <input type="checkbox" id="autoLaunchToggle"> 开机自动启动
+            </label>
+            <label style="display: flex; align-items: center; gap: 7px; cursor: pointer;">
+              <input type="checkbox" id="dockToggle"> 在 Mac Dock 栏显示图标
+            </label>
+            <label style="display: flex; align-items: center; gap: 7px; cursor: pointer;">
+              <input type="checkbox" id="trayToggle" checked> 在 Mac 顶部菜单栏显示图标
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
