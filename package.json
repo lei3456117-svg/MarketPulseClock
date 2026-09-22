@@ -1,6 +1,6 @@
 {
   "name": "desktop-pixel-clock",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Retro Cyberpunk Desktop Pixel Clock & Modular Widget",
   "main": "electron/main.js",
   "scripts": {

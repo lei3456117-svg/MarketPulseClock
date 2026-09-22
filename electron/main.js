@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow = null;
 let tray = null;
@@ -41,6 +42,7 @@ function createTray() {
         {
           label: '退出软件',
           click: () => {
+            saveWindowPosition();
             app.isQuitting = true;
             app.quit();
           }
@@ -73,6 +75,48 @@ function destroyTray() {
   }
 }
 
+function getWindowStatePath() {
+  return path.join(app.getPath('userData'), 'window-state.json');
+}
+
+function loadSavedPosition() {
+  try {
+    const file = getWindowStatePath();
+    if (fs.existsSync(file)) {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (typeof data.x === 'number' && typeof data.y === 'number') {
+        const displays = screen.getAllDisplays();
+        const onScreen = displays.some(d => {
+          const b = d.bounds;
+          return (
+            data.x >= b.x - 100 &&
+            data.x <= b.x + b.width - 50 &&
+            data.y >= b.y - 50 &&
+            data.y <= b.y + b.height - 50
+          );
+        });
+        if (onScreen) {
+          return { x: data.x, y: data.y };
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load window position:', e);
+  }
+  return null;
+}
+
+function saveWindowPosition() {
+  if (!mainWindow) return;
+  try {
+    const [x, y] = mainWindow.getPosition();
+    const file = getWindowStatePath();
+    fs.writeFileSync(file, JSON.stringify({ x, y }), 'utf8');
+  } catch (e) {
+    console.error('Failed to save window position:', e);
+  }
+}
+
 function createWindow() {
   // 默认启动时隐藏 Dock 栏图标（纯净桌面组件）
   if (process.platform === 'darwin' && app.dock) {
@@ -82,7 +126,8 @@ function createWindow() {
   // 默认启动菜单栏图标
   createTray();
 
-  mainWindow = new BrowserWindow({
+  const savedPos = loadSavedPosition();
+  const windowOpts = {
     width: 360,
     height: 256,
     frame: false,
@@ -95,6 +140,23 @@ function createWindow() {
       contextIsolation: false,
       sandbox: false
     }
+  };
+
+  if (savedPos) {
+    windowOpts.x = savedPos.x;
+    windowOpts.y = savedPos.y;
+  }
+
+  mainWindow = new BrowserWindow(windowOpts);
+
+  let moveTimeout = null;
+  mainWindow.on('moved', () => {
+    clearTimeout(moveTimeout);
+    moveTimeout = setTimeout(saveWindowPosition, 250);
+  });
+
+  mainWindow.on('close', () => {
+    saveWindowPosition();
   });
 
   mainWindow.loadFile(path.join(__dirname, '../src/index.html'));
