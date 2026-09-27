@@ -117,6 +117,45 @@ function saveWindowPosition() {
   }
 }
 
+function snapToNearestEdge() {
+  if (!mainWindow) return;
+  const bounds = mainWindow.getBounds();
+  const display = screen.getDisplayMatching(bounds);
+  if (!display) return;
+  const workArea = display.workArea;
+
+  const SNAP_THRESHOLD = 20; // 20px 屏幕边缘自动吸附阈值
+  let newX = bounds.x;
+  let newY = bounds.y;
+  let snapped = false;
+
+  // 左侧边缘吸附
+  if (Math.abs(bounds.x - workArea.x) <= SNAP_THRESHOLD) {
+    newX = workArea.x;
+    snapped = true;
+  }
+  // 右侧边缘吸附
+  else if (Math.abs((bounds.x + bounds.width) - (workArea.x + workArea.width)) <= SNAP_THRESHOLD) {
+    newX = workArea.x + workArea.width - bounds.width;
+    snapped = true;
+  }
+
+  // 顶部边缘吸附 (Mac 顶部状态栏下方 / Windows 顶部)
+  if (Math.abs(bounds.y - workArea.y) <= SNAP_THRESHOLD) {
+    newY = workArea.y;
+    snapped = true;
+  }
+  // 底部边缘吸附 (Windows 任务栏正上方 / Mac Dock 栏正上方)
+  else if (Math.abs((bounds.y + bounds.height) - (workArea.y + workArea.height)) <= SNAP_THRESHOLD) {
+    newY = workArea.y + workArea.height - bounds.height;
+    snapped = true;
+  }
+
+  if (snapped && (newX !== bounds.x || newY !== bounds.y)) {
+    mainWindow.setPosition(newX, newY);
+  }
+}
+
 function createWindow() {
   const isMac = process.platform === 'darwin';
   const isWin = process.platform === 'win32';
@@ -132,11 +171,12 @@ function createWindow() {
   const savedPos = loadSavedPosition();
   const windowOpts = {
     width: 360,
-    height: 256,
+    height: 226,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     hasShadow: true,
-    resizable: false,
+    resizable: isWin ? true : false,
     alwaysOnTop: false,
     skipTaskbar: isWin ? true : false,
     webPreferences: {
@@ -156,7 +196,10 @@ function createWindow() {
   let moveTimeout = null;
   mainWindow.on('moved', () => {
     clearTimeout(moveTimeout);
-    moveTimeout = setTimeout(saveWindowPosition, 250);
+    moveTimeout = setTimeout(() => {
+      snapToNearestEdge();
+      saveWindowPosition();
+    }, 80);
   });
 
   mainWindow.on('close', () => {
@@ -185,7 +228,35 @@ ipcMain.on('toggle-always-on-top', (event) => {
 
 ipcMain.on('resize-window', (event, { width, height }) => {
   if (mainWindow) {
-    mainWindow.setSize(width, height);
+    const isWin = process.platform === 'win32';
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayMatching(bounds);
+    const workArea = display ? display.workArea : null;
+
+    // 检查折叠/展开前是否紧贴屏幕底部任务栏
+    const wasBottomSnapped = workArea && Math.abs((bounds.y + bounds.height) - (workArea.y + workArea.height)) <= 8;
+
+    const targetW = Math.round(width);
+    const targetH = Math.round(height);
+
+    if (isWin) {
+      mainWindow.setResizable(true);
+    }
+
+    if (wasBottomSnapped) {
+      // 保持窗口底边紧贴任务栏向上/向下自适应折叠
+      const newY = workArea.y + workArea.height - targetH;
+      mainWindow.setBounds({ x: bounds.x, y: newY, width: targetW, height: targetH });
+    } else {
+      mainWindow.setSize(targetW, targetH);
+    }
+
+    if (isWin) {
+      mainWindow.setResizable(false);
+    }
+
+    snapToNearestEdge();
+    saveWindowPosition();
   }
 });
 

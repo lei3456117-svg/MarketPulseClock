@@ -391,12 +391,12 @@ function updateDateDisplay(date) {
 // 4. 模块系统管理
 // -------------------------------------------------------------
 const MODULES = [
-  { id: 'modLife', name: '⏳ 时间人生进度', height: 256 },
-  { id: 'modSys', name: '⚡ 系统性能监控', height: 278 },
-  { id: 'modPomo', name: '🍅 番茄专注钟', height: 256 },
-  { id: 'modWorld', name: '🌍 世界主要时钟', height: 256 },
-  { id: 'modMarket', name: '📈 全球金融市场', height: 256 },
-  { id: 'modMinimal', name: '⏱️ 极简纯钟模式', height: 136 }
+  { id: 'modLife', name: '⏳ 时间人生进度', height: 226 },
+  { id: 'modSys', name: '⚡ 系统性能监控', height: 252 },
+  { id: 'modPomo', name: '🍅 番茄专注钟', height: 198 },
+  { id: 'modWorld', name: '🌍 世界主要时钟', height: 222 },
+  { id: 'modMarket', name: '📈 全球金融市场', height: 222 },
+  { id: 'modMinimal', name: '⏱️ 极简纯钟模式', height: 146 }
 ];
 
 let activeModuleIndex = 0;
@@ -411,13 +411,15 @@ function switchModule(index) {
   const targetEl = document.getElementById(mod.id);
   if (targetEl) targetEl.classList.add('active');
 
-  // 控制中间分割线与模块容器的显隐 (极简模式下隐藏底部)
+  // 控制中间分割线与模块容器的显隐 (极简模式下隐藏底部并贴紧折叠)
   const midBar = document.getElementById('midBar');
   const modContainer = document.getElementById('moduleContainer');
   if (mod.id === 'modMinimal') {
     modContainer.style.display = 'none';
+    if (midBar) midBar.style.marginBottom = '0px';
   } else {
     modContainer.style.display = 'flex';
+    if (midBar) midBar.style.marginBottom = '10px';
   }
 
   // 调整窗口大小
@@ -779,13 +781,23 @@ function initSettings() {
 
   if (themeBtn && drawer) {
     themeBtn.addEventListener('click', () => {
-      drawer.classList.toggle('open');
+      const isOpen = drawer.classList.toggle('open');
+      if (ipcRenderer) {
+        if (isOpen) {
+          ipcRenderer.send('resize-window', { width: 360, height: 260 });
+        } else {
+          ipcRenderer.send('resize-window', { width: 360, height: MODULES[activeModuleIndex].height });
+        }
+      }
     });
   }
 
   if (closeBtn && drawer) {
     closeBtn.addEventListener('click', () => {
       drawer.classList.remove('open');
+      if (ipcRenderer) {
+        ipcRenderer.send('resize-window', { width: 360, height: MODULES[activeModuleIndex].height });
+      }
     });
   }
 

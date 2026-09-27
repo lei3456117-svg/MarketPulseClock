@@ -16,8 +16,8 @@
   user-select: none;
 }
 
-body {
-  background: transparent;
+html, body {
+  background: transparent !important;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Courier New", monospace;
   overflow: hidden;
   width: 100vw;
@@ -211,7 +211,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: 72px;
+  min-height: 0;
 }
 
 .module-view {
