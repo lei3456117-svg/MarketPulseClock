@@ -31,11 +31,19 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MarketPulseClock"
+      "shortcutName": "MarketPulseClock",
+      "uninstallDisplayName": "MarketPulseClock",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
     },
     "dmg": {
       "contents": [
