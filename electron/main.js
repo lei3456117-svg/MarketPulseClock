@@ -127,7 +127,7 @@ function snapToNearestEdge() {
   if (!display) return;
   const workArea = display.workArea;
 
-  const SNAP_THRESHOLD = 20; // 20px 屏幕边缘自动吸附阈值
+  const SNAP_THRESHOLD = 12; // 降低吸附吸力阈值，避免拖拽时像磁铁一样拖不动
   let newX = bounds.x;
   let newY = bounds.y;
   let snapped = false;
@@ -199,10 +199,11 @@ function createWindow() {
   let moveTimeout = null;
   mainWindow.on('moved', () => {
     clearTimeout(moveTimeout);
+    // 增加防抖延迟至 350ms，确保用户松开鼠标停止拖拽后才吸附，拖动过程中完全丝滑不卡手
     moveTimeout = setTimeout(() => {
       snapToNearestEdge();
       saveWindowPosition();
-    }, 80);
+    }, 350);
   });
 
   mainWindow.on('close', () => {
