@@ -7,10 +7,13 @@ let tray = null;
 
 function createTray() {
   if (tray) return;
-  const iconPath = path.join(__dirname, '../assets/trayTemplate.png');
+  const isMac = process.platform === 'darwin';
+  const iconPath = isMac 
+    ? path.join(__dirname, '../assets/trayTemplate.png')
+    : path.join(__dirname, '../assets/tray-win.png');
   try {
     tray = new Tray(iconPath);
-    tray.setToolTip('Market Pulse Clock');
+    tray.setToolTip('像素时钟');
 
     const updateTrayMenu = () => {
       const isTop = mainWindow ? mainWindow.isAlwaysOnTop() : false;

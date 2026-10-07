@@ -13,22 +13,23 @@
   },
   "build": {
     "appId": "com.antigravity.pixelclock",
-    "productName": "MarketPulseClock",
+    "productName": "像素时钟",
+    "icon": "build/icon.png",
     "afterPack": "build/afterPack.js",
     "mac": {
       "category": "public.app-category.utilities",
+      "icon": "build/icon.icns",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "extendInfo": {
-        "LSUIElement": 1
-      },
+      "artifactName": "MarketPulseClock-${version}-${arch}.${ext}",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "nsis",
         "portable"
@@ -41,13 +42,13 @@
       "deleteAppDataOnUninstall": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MarketPulseClock",
-      "uninstallDisplayName": "MarketPulseClock",
-      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "shortcutName": "像素时钟",
+      "uninstallDisplayName": "像素时钟",
+      "artifactName": "MarketPulseClock-Setup-${version}.${ext}",
       "include": "build/installer.nsh"
     },
     "portable": {
-      "artifactName": "${productName}-${version}-portable.${ext}"
+      "artifactName": "MarketPulseClock-${version}-portable.${ext}"
     },
     "dmg": {
       "contents": [
