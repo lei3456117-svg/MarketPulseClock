@@ -391,12 +391,12 @@ function updateDateDisplay(date) {
 // 4. 模块系统管理
 // -------------------------------------------------------------
 const MODULES = [
-  { id: 'modLife', name: '⏳ 时间人生进度', height: 226 },
-  { id: 'modSys', name: '⚡ 系统性能监控', height: 252 },
-  { id: 'modPomo', name: '🍅 番茄专注钟', height: 198 },
-  { id: 'modWorld', name: '🌍 世界主要时钟', height: 222 },
-  { id: 'modMarket', name: '📈 全球金融市场', height: 222 },
-  { id: 'modMinimal', name: '⏱️ 极简纯钟模式', height: 146 }
+  { id: 'modLife', name: '⏳ 时间人生进度', height: 236 },
+  { id: 'modSys', name: '⚡ 系统性能监控', height: 262 },
+  { id: 'modPomo', name: '🍅 番茄专注钟', height: 208 },
+  { id: 'modWorld', name: '🌍 世界主要时钟', height: 232 },
+  { id: 'modMarket', name: '📈 全球金融市场', height: 232 },
+  { id: 'modMinimal', name: '⏱️ 极简纯钟模式', height: 148 }
 ];
 
 let activeModuleIndex = 0;

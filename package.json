@@ -14,8 +14,12 @@
   "build": {
     "appId": "com.antigravity.pixelclock",
     "productName": "MarketPulseClock",
+    "afterPack": "build/afterPack.js",
     "mac": {
       "category": "public.app-category.utilities",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
       "extendInfo": {
         "LSUIElement": 1
       },
