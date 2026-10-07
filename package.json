@@ -51,14 +51,26 @@
       "artifactName": "MarketPulseClock-${version}-portable.${ext}"
     },
     "dmg": {
+      "background": "build/dmg-background.tiff",
+      "iconSize": 90,
+      "window": {
+        "width": 640,
+        "height": 510
+      },
       "contents": [
         {
-          "x": 130,
-          "y": 220
+          "x": 110,
+          "y": 70,
+          "type": "file",
+          "path": "build/一键信任.command"
         },
         {
-          "x": 410,
-          "y": 220,
+          "x": 170,
+          "y": 305
+        },
+        {
+          "x": 470,
+          "y": 305,
           "type": "link",
           "path": "/Applications"
         }
