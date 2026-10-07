@@ -174,7 +174,7 @@ function createWindow() {
   const savedPos = loadSavedPosition();
   const windowOpts = {
     width: 360,
-    height: 236,
+    height: 232,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
