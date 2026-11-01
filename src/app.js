@@ -11,7 +11,7 @@ try {
 }
 
 // -------------------------------------------------------------
-// 1. 5x7 点阵字体掩码（精准对齐设计图）
+// 1. 点阵字体掩码（5x7 标准字体 与 5x9 高挑大字体）
 // -------------------------------------------------------------
 const FONT_5X7 = {
   '0': [
@@ -100,6 +100,119 @@ const FONT_5X7 = {
     [1,0,0,0,1],
     [1,0,0,0,1],
     [0,1,1,1,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,1,1,1,0]
+  ]
+};
+
+const FONT_5X9 = {
+  '0': [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0]
+  ],
+  '1': [
+    [0,0,1,0,0],
+    [0,1,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,1,1,1,0]
+  ],
+  '2': [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,1,1,1,0],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,1,1,1,1]
+  ],
+  '3': [
+    [1,1,1,1,0],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,1,1,1,0],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [1,1,1,1,0]
+  ],
+  '4': [
+    [0,0,0,1,0],
+    [0,0,1,1,0],
+    [0,1,0,1,0],
+    [1,0,0,1,0],
+    [1,0,0,1,0],
+    [1,1,1,1,1],
+    [0,0,0,1,0],
+    [0,0,0,1,0],
+    [0,0,0,1,0]
+  ],
+  '5': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,1,1,1,0],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0]
+  ],
+  '6': [
+    [0,1,1,1,0],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0]
+  ],
+  '7': [
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,1,0],
+    [0,0,0,1,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,1,0,0,0],
+    [0,1,0,0,0]
+  ],
+  '8': [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0],
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0]
+  ],
+  '9': [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,1],
+    [0,0,0,0,1],
     [0,0,0,0,1],
     [0,0,0,0,1],
     [0,1,1,1,0]
@@ -286,12 +399,12 @@ function applyCanvasDimensions() {
   const dpr = window.devicePixelRatio || 1;
   const isWidget = currentSizeMode === 'widget';
   
-  // 小组件模式下：时钟再放大至 148x44，点阵秒数进度/无规律流光矩阵 148x12
+  // 小组件模式下：时钟再大幅放大至 148x58 (5x9大点阵)，压扁秒数流动矩阵 148x18
   // 标准模式下：保持时钟 230x65，右侧矩阵 72x65
   const clockW = isWidget ? 148 : 230;
-  const clockH = isWidget ? 44 : 65;
+  const clockH = isWidget ? 58 : 65;
   const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 12 : 65;
+  const matrixH = isWidget ? 18 : 65;
 
   clockCanvas.width = clockW * dpr;
   clockCanvas.height = clockH * dpr;
@@ -328,25 +441,27 @@ function drawDot(ctx, x, y, brightness, isLit) {
   ctx.globalAlpha = 1.0;
 }
 
-// 绘制 5x7 数字
+// 绘制数字（小组件模式使用 5x9 高挑大点阵，标准模式使用 5x7）
 function renderDigit(ctx, startX, startY, digitChar, transition) {
-  const targetMatrix = FONT_5X7[digitChar] || FONT_5X7['0'];
   const isWidget = currentSizeMode === 'widget';
+  const font = isWidget ? FONT_5X9 : FONT_5X7;
+  const numRows = isWidget ? 9 : 7;
+  const targetMatrix = font[digitChar] || font['0'];
   const cellSize = isWidget ? 5.85 : 9;
 
   if (transition.progress >= 1) {
-    for (let r = 0; r < 7; r++) {
+    for (let r = 0; r < numRows; r++) {
       for (let c = 0; c < 5; c++) {
         const isLit = targetMatrix[r][c] === 1;
         drawDot(ctx, startX + c * cellSize, startY + r * cellSize, 1, isLit);
       }
     }
   } else {
-    const fromMatrix = FONT_5X7[transition.from] || FONT_5X7['0'];
+    const fromMatrix = font[transition.from] || font['0'];
     const p = transition.progress;
 
-    for (let r = 0; r < 7; r++) {
-      const rowDelay = (6 - r) * 0.08;
+    for (let r = 0; r < numRows; r++) {
+      const rowDelay = ((numRows - 1) - r) * 0.08;
       const rowProgress = Math.min(1, Math.max(0, (p - rowDelay) / 0.5));
 
       for (let c = 0; c < 5; c++) {
@@ -370,12 +485,13 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
   }
 }
 
-// 绘制冒号
+// 绘制冒号（小组件 5x9 下在第 2 行和第 6 行）
 function renderColon(ctx, startX, startY, blinkState) {
   const isWidget = currentSizeMode === 'widget';
   const cellSize = isWidget ? 5.85 : 9;
-  for (let r = 0; r < 7; r++) {
-    const isColonDot = (r === 2 || r === 4);
+  const numRows = isWidget ? 9 : 7;
+  for (let r = 0; r < numRows; r++) {
+    const isColonDot = isWidget ? (r === 2 || r === 6) : (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
     drawDot(ctx, startX, startY + r * cellSize, blinkState ? 1 : 0.2, isLit);
   }
@@ -385,7 +501,7 @@ function renderColon(ctx, startX, startY, blinkState) {
 function renderClockCanvas() {
   const isWidget = currentSizeMode === 'widget';
   const clockW = isWidget ? 148 : 230;
-  const clockH = isWidget ? 44 : 65;
+  const clockH = isWidget ? 58 : 65;
   const cellSize = isWidget ? 5.85 : 9;
 
   clockCtx.clearRect(0, 0, clockW, clockH);
@@ -414,11 +530,11 @@ function renderClockCanvas() {
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 动态矩阵：小组件模式下为 30列 x 2行 = 60点「秒数进度与量子微光」矩阵，标准模式下为 8列 x 7行
+// 动态矩阵：小组件模式下为 30列 x 3行 (18px)「秒数进度与量子微光」矩阵，标准模式下为 8列 x 7行
 function renderDynamicMatrix() {
   const isWidget = currentSizeMode === 'widget';
   const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 12 : 65;
+  const matrixH = isWidget ? 18 : 65;
   const cellSize = isWidget ? 4.9 : 9;
   const cols = isWidget ? 30 : 8;
   const rows = isWidget ? 2 : 7;
@@ -429,38 +545,34 @@ function renderDynamicMatrix() {
   const seconds = now.getSeconds();
   const millis = now.getMilliseconds();
   const startX = 1;
-  const startY = 1;
+  const startY = 2;
 
   if (isWidget) {
     // 60点秒数进度体系：第 0~29 秒为上行，第 30~59 秒为下行
-    // 过去已走完的秒数：常亮点
-    // 当前秒（精确到毫秒）：脉冲呼吸发光
-    // 未走到的秒数：无规律量子随机闪烁微光（充满生机科技感）
     for (let r = 0; r < 2; r++) {
       for (let c = 0; c < 30; c++) {
         const dotIndex = r * 30 + c; // 0 到 59 秒
         const x = startX + c * cellSize;
-        const y = startY + r * cellSize;
+        const y = startY + r * 6.5; // 间距更舒适
         
-        // 独有点尺寸（紧凑精致）
-        const dotW = 3.9;
+        const dotW = 4.0;
 
         if (dotIndex < seconds) {
-          // 已过去秒数：稳定常亮，带极其轻微的能量波动
+          // 已过去秒数：常亮
           const subtleWave = 0.85 + 0.15 * Math.sin(c * 0.4 + nowMs * 0.002);
           matrixCtx.fillStyle = currentTheme.lit;
           matrixCtx.globalAlpha = subtleWave;
           matrixCtx.fillRect(x, y, dotW, dotW);
         } else if (dotIndex === seconds) {
-          // 当前秒：随着毫秒流畅呼吸跳动
+          // 当前秒：毫秒平滑呼吸跳动
           const pulse = 0.4 + 0.6 * (1 - Math.abs(Math.sin((millis / 1000) * Math.PI)));
           matrixCtx.fillStyle = currentTheme.lit;
           matrixCtx.globalAlpha = pulse;
           matrixCtx.fillRect(x, y, dotW, dotW);
         } else {
-          // 未来秒数：未点亮底色，伴随无规律的随机量子微光掠过
-          const noise = (Math.sin(c * 27.13 + r * 91.71 + Math.floor(nowMs / 140)) * 43758.5453) % 1;
-          const isSparkle = noise > 0.94; // 偶发无规律闪烁
+          // 未来秒数：未点亮底色，伴随无规律的随机微弱量子闪烁
+          const noise = (Math.sin(c * 27.13 + r * 91.71 + Math.floor(nowMs / 130)) * 43758.5453) % 1;
+          const isSparkle = noise > 0.93;
           if (isSparkle) {
             matrixCtx.fillStyle = currentTheme.lit;
             matrixCtx.globalAlpha = 0.35 + 0.4 * Math.random();

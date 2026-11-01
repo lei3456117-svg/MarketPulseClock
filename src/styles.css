@@ -411,7 +411,7 @@ html, body {
 /* ============================================================ */
 body.mode-widget .widget-card {
   border-radius: 20px;
-  padding: 9px 8px 9px 8px;
+  padding: 8px 8px 8px 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -449,7 +449,7 @@ body.mode-widget .header-controls {
 
 body.mode-widget .widget-header {
   width: 100%;
-  margin-bottom: 0px;
+  margin-bottom: 2px;
 }
 
 body.mode-widget .clock-matrix-row {
@@ -458,20 +458,20 @@ body.mode-widget .clock-matrix-row {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 1px;
-  margin-bottom: 1px;
+  gap: 8px;
+  margin-top: 2px;
+  margin-bottom: 4px;
 }
 
 body.mode-widget .pixel-clock-canvas {
   width: 148px !important;
-  height: 44px !important;
+  height: 58px !important;
   margin: 0 auto;
 }
 
 body.mode-widget .dynamic-matrix-canvas {
   width: 148px !important;
-  height: 12px !important;
+  height: 18px !important;
   margin: 0 auto;
 }
 
@@ -494,18 +494,18 @@ body.mode-widget .widget-mini-footer {
   justify-content: space-between;
   align-items: center;
   padding: 0 4px;
-  margin-top: 2px;
+  margin-top: 0px;
 }
 
 body.mode-widget .widget-date-text {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--text-main);
   letter-spacing: 0.5px;
 }
 
 body.mode-widget .widget-week-text {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--text-dim);
   letter-spacing: 0.5px;
