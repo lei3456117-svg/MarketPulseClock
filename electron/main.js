@@ -171,6 +171,7 @@ function createWindow() {
   const defaultMode = (savedState && savedState.sizeMode) ? savedState.sizeMode : 'widget';
   const defaultW = defaultMode === 'widget' ? 164 : (savedState && savedState.width ? savedState.width : 360);
   const defaultH = defaultMode === 'widget' ? 164 : (savedState && savedState.height ? savedState.height : 232);
+  const defaultPin = (savedState && typeof savedState.alwaysOnTop === 'boolean') ? savedState.alwaysOnTop : true; // 默认像 macOS 小组件一样常驻桌面
 
   const windowOpts = {
     width: defaultW,
@@ -182,9 +183,9 @@ function createWindow() {
     backgroundColor: '#00000000',
     hasShadow: true,
     resizable: true,
-    alwaysOnTop: false,
+    alwaysOnTop: defaultPin,
     skipTaskbar: isWin ? true : false,
-    hiddenInMissionControl: isMac ? true : false, // macOS 桌面小组件特性：防止点击壁纸时窗口自动缩退到屏幕侧边
+    hiddenInMissionControl: isMac ? true : false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -210,6 +211,10 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow(windowOpts);
+
+  if (defaultPin) {
+    mainWindow.setAlwaysOnTop(true, 'floating', 1);
+  }
 
   // 在 macOS 上将窗口设为所有工作区可见并在全屏时显示，同时固定在桌面上不被台前调度/点按壁纸挤开
   if (isMac && mainWindow.setVisibleOnAllWorkspaces) {
@@ -259,6 +264,7 @@ ipcMain.on('toggle-always-on-top', (event) => {
   if (mainWindow.setVisibleOnAllWorkspaces) {
     mainWindow.setVisibleOnAllWorkspaces(isTop, { visibleOnFullScreen: true });
   }
+  saveWindowState({ alwaysOnTop: isTop });
   event.reply('always-on-top-changed', isTop);
 });
 

@@ -1201,8 +1201,15 @@ if (ipcRenderer) {
     pinBtn.addEventListener('click', () => ipcRenderer.send('toggle-always-on-top'));
     ipcRenderer.on('always-on-top-changed', (e, isTop) => {
       pinBtn.classList.toggle('active', isTop);
-      pinBtn.setAttribute('title', isTop ? '当前已始终置顶 (点击取消)' : '点击开启始终置顶');
+      pinBtn.setAttribute('title', isTop ? '当前已常驻桌面 (点击取消置顶)' : '点击开启常驻桌面');
     });
+
+    // 初始化置顶图标状态
+    ipcRenderer.invoke('get-saved-state').then(state => {
+      const isTop = (state && typeof state.alwaysOnTop === 'boolean') ? state.alwaysOnTop : true;
+      pinBtn.classList.toggle('active', isTop);
+      pinBtn.setAttribute('title', isTop ? '当前已常驻桌面 (点击取消置顶)' : '点击开启常驻桌面');
+    }).catch(() => {});
   }
   if (minBtn) minBtn.addEventListener('click', () => ipcRenderer.send('minimize-window'));
   if (closeBtn) closeBtn.addEventListener('click', () => ipcRenderer.send('close-window'));
