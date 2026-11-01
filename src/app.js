@@ -220,12 +220,34 @@ let currentSizeMode = 'widget'; // 'widget' (180x180) or 'standard' (360x...)
 
 function setSizeMode(mode) {
   currentSizeMode = mode === 'standard' ? 'standard' : 'widget';
+  const midBar = document.getElementById('midBar');
+  const modContainer = document.getElementById('moduleContainer');
+  const miniFooter = document.getElementById('widgetMiniFooter');
+
   if (currentSizeMode === 'widget') {
     document.body.classList.add('mode-widget');
     document.body.classList.remove('mode-standard');
+    if (midBar) midBar.style.display = 'none';
+    if (modContainer) modContainer.style.display = 'none';
+    if (miniFooter) miniFooter.style.display = 'flex';
   } else {
     document.body.classList.remove('mode-widget');
     document.body.classList.add('mode-standard');
+    if (miniFooter) miniFooter.style.display = 'none';
+    const mod = MODULES[activeModuleIndex];
+    if (mod && mod.id === 'modMinimal') {
+      if (modContainer) modContainer.style.display = 'none';
+      if (midBar) {
+        midBar.style.display = 'flex';
+        midBar.style.marginBottom = '0px';
+      }
+    } else {
+      if (modContainer) modContainer.style.display = 'flex';
+      if (midBar) {
+        midBar.style.display = 'flex';
+        midBar.style.marginBottom = '10px';
+      }
+    }
   }
 
   const select = document.getElementById('sizeModeSelect');
@@ -249,7 +271,7 @@ function applyCurrentWindowSize() {
   const isDrawerOpen = drawer && drawer.classList.contains('open');
 
   if (currentSizeMode === 'widget') {
-    ipcRenderer.send('resize-window', { width: 180, height: 180 });
+    ipcRenderer.send('resize-window', { width: 164, height: 164 });
   } else {
     if (isDrawerOpen) {
       ipcRenderer.send('resize-window', { width: 360, height: 260 });
@@ -263,10 +285,13 @@ function applyCurrentWindowSize() {
 function applyCanvasDimensions() {
   const dpr = window.devicePixelRatio || 1;
   const isWidget = currentSizeMode === 'widget';
-  const clockW = isWidget ? 112 : 230;
-  const clockH = isWidget ? 32 : 65;
-  const matrixW = isWidget ? 35 : 72;
-  const matrixH = isWidget ? 32 : 65;
+  
+  // 小组件模式下：放大时钟至 148x42，横向流动矩阵 148x36
+  // 标准模式下：保持时钟 230x65，右侧矩阵 72x65
+  const clockW = isWidget ? 148 : 230;
+  const clockH = isWidget ? 42 : 65;
+  const matrixW = isWidget ? 148 : 72;
+  const matrixH = isWidget ? 36 : 65;
 
   clockCanvas.width = clockW * dpr;
   clockCanvas.height = clockH * dpr;
@@ -286,7 +311,7 @@ function applyCanvasDimensions() {
 // 绘制单点：精准还原原图的纯净哑光点阵面板质感（无强眩光晕影）
 function drawDot(ctx, x, y, brightness, isLit) {
   const isWidget = currentSizeMode === 'widget';
-  const dotSize = isWidget ? 3.5 : 7;
+  const dotSize = isWidget ? 4.8 : 7;
   if (isLit) {
     const alpha = Math.min(1, Math.max(0.15, brightness));
     ctx.fillStyle = currentTheme.lit;
@@ -307,7 +332,7 @@ function drawDot(ctx, x, y, brightness, isLit) {
 function renderDigit(ctx, startX, startY, digitChar, transition) {
   const targetMatrix = FONT_5X7[digitChar] || FONT_5X7['0'];
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 4.5 : 9;
+  const cellSize = isWidget ? 6.0 : 9;
 
   if (transition.progress >= 1) {
     for (let r = 0; r < 7; r++) {
@@ -348,7 +373,7 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
 // 绘制冒号
 function renderColon(ctx, startX, startY, blinkState) {
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 4.5 : 9;
+  const cellSize = isWidget ? 6.0 : 9;
   for (let r = 0; r < 7; r++) {
     const isColonDot = (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
@@ -359,9 +384,9 @@ function renderColon(ctx, startX, startY, blinkState) {
 // 绘制主时钟
 function renderClockCanvas() {
   const isWidget = currentSizeMode === 'widget';
-  const clockW = isWidget ? 112 : 230;
-  const clockH = isWidget ? 32 : 65;
-  const cellSize = isWidget ? 4.5 : 9;
+  const clockW = isWidget ? 148 : 230;
+  const clockH = isWidget ? 42 : 65;
+  const cellSize = isWidget ? 6.0 : 9;
 
   clockCtx.clearRect(0, 0, clockW, clockH);
 
@@ -389,13 +414,14 @@ function renderClockCanvas() {
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 右侧动态矩阵
+// 动态矩阵（小组件模式下为横向 25列 x 6行，标准模式下为 8列 x 7行）
 function renderDynamicMatrix() {
   const isWidget = currentSizeMode === 'widget';
-  const matrixW = isWidget ? 35 : 72;
-  const matrixH = isWidget ? 32 : 65;
-  const cellSize = isWidget ? 4.5 : 9;
-  const cols = isWidget ? 7 : 8;
+  const matrixW = isWidget ? 148 : 72;
+  const matrixH = isWidget ? 36 : 65;
+  const cellSize = isWidget ? 6.0 : 9;
+  const cols = isWidget ? 25 : 8;
+  const rows = isWidget ? 6 : 7;
 
   matrixCtx.clearRect(0, 0, matrixW, matrixH);
   const now = Date.now();
@@ -403,10 +429,10 @@ function renderDynamicMatrix() {
   const startX = 0;
   const startY = 0;
 
-  for (let r = 0; r < 7; r++) {
+  for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const wave1 = Math.sin(c * 0.8 - r * 1.0 + t);
-      const wave2 = Math.cos((c + r) * 0.6 - t * 1.4);
+      const wave1 = Math.sin(c * 0.5 - r * 0.8 + t);
+      const wave2 = Math.cos((c + r) * 0.4 - t * 1.4);
       const noise = (Math.sin(c * 13.98 + r * 79.23 + Math.floor(now / 160)) * 43758.5453) % 1;
       
       const intensity = (wave1 + wave2 + noise * 0.65);
@@ -460,7 +486,9 @@ function updateTransitions(nowMs) {
 
 function updateDateDisplay(date) {
   const dateEl = document.getElementById('dateTimezone');
-  if (!dateEl) return;
+  const miniDateEl = document.getElementById('widgetDateText');
+  const miniWeekEl = document.getElementById('widgetWeekText');
+  
   const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   const dayName = days[date.getDay()];
@@ -468,10 +496,23 @@ function updateDateDisplay(date) {
   const dayNum = date.getDate();
   const tzOffset = -date.getTimezoneOffset() / 60;
   const tzStr = tzOffset >= 0 ? `+${tzOffset}` : `${tzOffset}`;
-  if (currentSizeMode === 'widget') {
-    dateEl.textContent = `${dayName} ${monthName} ${dayNum}`;
-  } else {
-    dateEl.textContent = `${dayName}, ${monthName} ${dayNum} · CST ${tzStr}`;
+
+  if (dateEl) {
+    if (currentSizeMode === 'widget') {
+      dateEl.textContent = `${dayName} ${monthName} ${dayNum}`;
+    } else {
+      dateEl.textContent = `${dayName}, ${monthName} ${dayNum} · CST ${tzStr}`;
+    }
+  }
+
+  if (miniDateEl) {
+    miniDateEl.textContent = `${dayName}, ${monthName} ${dayNum}`;
+  }
+  if (miniWeekEl) {
+    const oneJan = new Date(date.getFullYear(), 0, 1);
+    const numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
+    const weekNum = Math.ceil((date.getDay() + 1 + numberOfDays) / 7);
+    miniWeekEl.textContent = `W${weekNum} · CST`;
   }
 }
 
@@ -502,12 +543,23 @@ function switchModule(index) {
   // 控制中间分割线与模块容器的显隐 (极简模式下隐藏底部并贴紧折叠)
   const midBar = document.getElementById('midBar');
   const modContainer = document.getElementById('moduleContainer');
-  if (mod.id === 'modMinimal') {
-    modContainer.style.display = 'none';
-    if (midBar) midBar.style.marginBottom = '0px';
+  if (currentSizeMode !== 'widget') {
+    if (mod.id === 'modMinimal') {
+      if (modContainer) modContainer.style.display = 'none';
+      if (midBar) {
+        midBar.style.display = 'flex';
+        midBar.style.marginBottom = '0px';
+      }
+    } else {
+      if (modContainer) modContainer.style.display = 'flex';
+      if (midBar) {
+        midBar.style.display = 'flex';
+        midBar.style.marginBottom = '10px';
+      }
+    }
   } else {
-    modContainer.style.display = 'flex';
-    if (midBar) midBar.style.marginBottom = '10px';
+    if (modContainer) modContainer.style.display = 'none';
+    if (midBar) midBar.style.display = 'none';
   }
 
   // 调整窗口大小
@@ -998,6 +1050,29 @@ if (ipcRenderer) {
   }
   if (minBtn) minBtn.addEventListener('click', () => ipcRenderer.send('minimize-window'));
   if (closeBtn) closeBtn.addEventListener('click', () => ipcRenderer.send('close-window'));
+
+  ipcRenderer.on('window-resized', (e, { width, height }) => {
+    // 监听拖拽缩放事件：自适应切换或重算 Canvas
+    if (width > 260) {
+      if (currentSizeMode !== 'standard') {
+        currentSizeMode = 'standard';
+        document.body.classList.remove('mode-widget');
+        document.body.classList.add('mode-standard');
+        const select = document.getElementById('sizeModeSelect');
+        if (select) select.value = 'standard';
+        applyCanvasDimensions();
+      }
+    } else {
+      if (currentSizeMode !== 'widget') {
+        currentSizeMode = 'widget';
+        document.body.classList.add('mode-widget');
+        document.body.classList.remove('mode-standard');
+        const select = document.getElementById('sizeModeSelect');
+        if (select) select.value = 'widget';
+        applyCanvasDimensions();
+      }
+    }
+  });
 }
 
 // -------------------------------------------------------------

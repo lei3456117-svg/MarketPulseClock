@@ -407,21 +407,26 @@ html, body {
 }
 
 /* ============================================================ */
-/* 📱 180×180 桌面小组件模式 (自适应苹果桌面日历小组件比例) */
+/* 📱 164×164 精致小组件模式 (完全对齐 macOS 桌面日历小组件) */
 /* ============================================================ */
 body.mode-widget .widget-card {
-  border-radius: 22px;
-  padding: 10px 12px 10px 12px;
+  border-radius: 20px;
+  padding: 10px 10px 10px 10px;
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
 }
 
 body.mode-widget .settings-drawer {
-  border-radius: 22px;
+  border-radius: 20px;
   padding: 10px 12px;
 }
 
 body.mode-widget .title {
-  font-size: 8px;
+  font-size: 8.5px;
   letter-spacing: 1px;
 }
 
@@ -434,7 +439,7 @@ body.mode-widget .pulse-indicator {
 }
 
 body.mode-widget .control-btn {
-  font-size: 9px;
+  font-size: 9.5px;
   padding: 1px;
 }
 
@@ -443,108 +448,67 @@ body.mode-widget .header-controls {
 }
 
 body.mode-widget .widget-header {
-  margin-bottom: 2px;
+  width: 100%;
+  margin-bottom: 0px;
 }
 
 body.mode-widget .clock-matrix-row {
-  margin-bottom: 2px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 1px;
+  margin-bottom: 1px;
 }
 
 body.mode-widget .pixel-clock-canvas {
-  width: 112px !important;
-  height: 32px !important;
+  width: 148px !important;
+  height: 42px !important;
+  margin: 0 auto;
 }
 
 body.mode-widget .dynamic-matrix-canvas {
-  width: 35px !important;
-  height: 32px !important;
+  width: 148px !important;
+  height: 36px !important;
+  margin: 0 auto;
 }
 
 body.mode-widget .mid-bar {
-  font-size: 7.5px;
-  margin-bottom: 3px;
-  padding-bottom: 3px;
+  display: none; /* 小组件下隐藏中间栏，保持纯粹 */
 }
 
-body.mode-widget .date-timezone {
-  font-size: 7.5px;
-  letter-spacing: 0.8px;
+body.mode-widget .module-container {
+  display: none; /* 小组件下精简非必要进度条，时钟更大更纯粹 */
 }
 
-body.mode-widget .module-title {
-  font-size: 7.5px;
-  padding: 1px 3px;
-  max-width: 68px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
+/* 小组件底部极简日期栏 */
+.widget-mini-footer {
+  display: none;
 }
 
-body.mode-widget .module-nav-btn {
-  width: 13px;
-  height: 13px;
-  font-size: 8px;
+body.mode-widget .widget-mini-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  margin-top: 2px;
 }
 
-body.mode-widget .module-view {
-  gap: 4px;
-}
-
-body.mode-widget .progress-header {
-  font-size: 7.5px;
-}
-
-body.mode-widget .pixel-bar {
-  height: 3px;
-  gap: 1.5px;
-}
-
-body.mode-widget .stat-row {
-  font-size: 7.5px;
-}
-
-body.mode-widget .stat-label {
-  font-size: 7.5px;
-  gap: 3px;
-}
-
-body.mode-widget .stat-value {
-  font-size: 7.5px;
-}
-
-body.mode-widget .market-code {
-  font-size: 8px;
+body.mode-widget .widget-date-text {
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--text-main);
   letter-spacing: 0.5px;
 }
 
-body.mode-widget .market-name {
-  font-size: 7.5px;
-}
-
-body.mode-widget .market-status {
-  font-size: 7.5px;
-}
-
-body.mode-widget .market-time {
-  font-size: 7.5px;
-}
-
-body.mode-widget .market-item {
-  padding: 2px 0;
-}
-
-body.mode-widget .pomo-time-large {
-  font-size: 14px;
-}
-
-body.mode-widget .pomo-btn {
-  font-size: 8px;
-  padding: 2px 5px;
-}
-
-body.mode-widget .pomo-timer-row {
-  gap: 4px;
+body.mode-widget .widget-week-text {
+  font-size: 8.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
 }
 
 body.mode-widget .settings-header {
@@ -561,14 +525,6 @@ body.mode-widget .settings-body {
 body.mode-widget .theme-chip {
   height: 22px;
   font-size: 7.5px;
-}
-
-  padding: 14px 16px;
-  display: none;
-  flex-direction: column;
-  z-index: 100;
-  -webkit-app-region: no-drag;
-  overflow-y: auto;
 }
 
 .settings-drawer::-webkit-scrollbar {

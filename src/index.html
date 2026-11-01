@@ -32,6 +32,12 @@
       <canvas id="matrixCanvas" width="72" height="65" class="dynamic-matrix-canvas"></canvas>
     </div>
 
+    <!-- 小组件模式专属紧凑日期条 (放在横向滚动矩阵下方) -->
+    <div class="widget-mini-footer" id="widgetMiniFooter">
+      <span id="widgetDateText" class="widget-date-text">SUN, NOV 1</span>
+      <span id="widgetWeekText" class="widget-week-text">W44 · CST</span>
+    </div>
+
     <!-- 中部：日期与模块切换导航 -->
     <div class="mid-bar" id="midBar">
       <div id="dateTimezone" class="date-timezone">MON, SEP 21 · CST +8</div>
@@ -200,7 +206,7 @@
         <div class="custom-color-row">
           <span>窗口尺寸模式</span>
           <select id="sizeModeSelect" style="background: #14181c; color: #c4cad1; border: 1px solid #283038; border-radius: 4px; padding: 2px 6px; font-size: 10px;">
-            <option value="widget" selected>📱 小组件模式 (180×180)</option>
+            <option value="widget" selected>📱 精致小组件 (164×164)</option>
             <option value="standard">🖥️ 标准扩展模式 (360px)</option>
           </select>
         </div>

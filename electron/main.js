@@ -169,17 +169,19 @@ function createWindow() {
 
   const savedState = loadSavedPosition();
   const defaultMode = (savedState && savedState.sizeMode) ? savedState.sizeMode : 'widget';
-  const defaultW = defaultMode === 'widget' ? 180 : 360;
-  const defaultH = defaultMode === 'widget' ? 180 : 232;
+  const defaultW = defaultMode === 'widget' ? 164 : (savedState && savedState.width ? savedState.width : 360);
+  const defaultH = defaultMode === 'widget' ? 164 : (savedState && savedState.height ? savedState.height : 232);
 
   const windowOpts = {
     width: defaultW,
     height: defaultH,
+    minWidth: 140,
+    minHeight: 140,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
     hasShadow: true,
-    resizable: isWin ? true : false,
+    resizable: true,
     alwaysOnTop: false,
     skipTaskbar: isWin ? true : false,
     webPreferences: {
@@ -216,6 +218,18 @@ function createWindow() {
       snapToNearestEdge();
       saveWindowPosition();
     }, 350);
+  });
+
+  let resizeTimeout = null;
+  mainWindow.on('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      saveWindowPosition();
+      if (mainWindow) {
+        const [w, h] = mainWindow.getSize();
+        mainWindow.webContents.send('window-resized', { width: w, height: h });
+      }
+    }, 100);
   });
 
   mainWindow.on('close', () => {
@@ -255,20 +269,12 @@ ipcMain.on('resize-window', (event, { width, height }) => {
     const targetW = Math.round(width);
     const targetH = Math.round(height);
 
-    if (isWin) {
-      mainWindow.setResizable(true);
-    }
-
     if (wasBottomSnapped) {
       // 保持窗口底边紧贴任务栏向上/向下自适应折叠
       const newY = workArea.y + workArea.height - targetH;
       mainWindow.setBounds({ x: bounds.x, y: newY, width: targetW, height: targetH });
     } else {
       mainWindow.setSize(targetW, targetH);
-    }
-
-    if (isWin) {
-      mainWindow.setResizable(false);
     }
 
     snapToNearestEdge();
