@@ -458,20 +458,20 @@ body.mode-widget .clock-matrix-row {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 1px;
-  margin-bottom: 1px;
+  gap: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
 body.mode-widget .pixel-clock-canvas {
-  width: 148px !important;
+  width: 142px !important;
   height: 42px !important;
   margin: 0 auto;
 }
 
 body.mode-widget .dynamic-matrix-canvas {
-  width: 148px !important;
-  height: 36px !important;
+  width: 142px !important;
+  height: 14px !important;
   margin: 0 auto;
 }
 

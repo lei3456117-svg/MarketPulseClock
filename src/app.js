@@ -286,12 +286,12 @@ function applyCanvasDimensions() {
   const dpr = window.devicePixelRatio || 1;
   const isWidget = currentSizeMode === 'widget';
   
-  // 小组件模式下：放大时钟至 148x42，横向流动矩阵 148x36
+  // 小组件模式下：放大时钟至 142x42 (居中无裁切)，压扁流动矩阵至 142x14 (2行声波光带)
   // 标准模式下：保持时钟 230x65，右侧矩阵 72x65
-  const clockW = isWidget ? 148 : 230;
+  const clockW = isWidget ? 142 : 230;
   const clockH = isWidget ? 42 : 65;
-  const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 36 : 65;
+  const matrixW = isWidget ? 142 : 72;
+  const matrixH = isWidget ? 14 : 65;
 
   clockCanvas.width = clockW * dpr;
   clockCanvas.height = clockH * dpr;
@@ -332,7 +332,7 @@ function drawDot(ctx, x, y, brightness, isLit) {
 function renderDigit(ctx, startX, startY, digitChar, transition) {
   const targetMatrix = FONT_5X7[digitChar] || FONT_5X7['0'];
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 6.0 : 9;
+  const cellSize = isWidget ? 5.6 : 9;
 
   if (transition.progress >= 1) {
     for (let r = 0; r < 7; r++) {
@@ -373,7 +373,7 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
 // 绘制冒号
 function renderColon(ctx, startX, startY, blinkState) {
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 6.0 : 9;
+  const cellSize = isWidget ? 5.6 : 9;
   for (let r = 0; r < 7; r++) {
     const isColonDot = (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
@@ -384,14 +384,14 @@ function renderColon(ctx, startX, startY, blinkState) {
 // 绘制主时钟
 function renderClockCanvas() {
   const isWidget = currentSizeMode === 'widget';
-  const clockW = isWidget ? 148 : 230;
+  const clockW = isWidget ? 142 : 230;
   const clockH = isWidget ? 42 : 65;
-  const cellSize = isWidget ? 6.0 : 9;
+  const cellSize = isWidget ? 5.6 : 9;
 
   clockCtx.clearRect(0, 0, clockW, clockH);
 
-  const startY = 0;
-  let curX = 0;
+  const startY = 1;
+  let curX = 1;
 
   // 第1个字符
   renderDigit(clockCtx, curX, startY, currentDigits[0], digitTransitions[0]);
@@ -414,25 +414,25 @@ function renderClockCanvas() {
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 动态矩阵（小组件模式下为横向 25列 x 6行，标准模式下为 8列 x 7行）
+// 动态矩阵（小组件模式下压扁为 25列 x 2行，呈极简横向声波光带，标准模式下为 8列 x 7行）
 function renderDynamicMatrix() {
   const isWidget = currentSizeMode === 'widget';
-  const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 36 : 65;
-  const cellSize = isWidget ? 6.0 : 9;
+  const matrixW = isWidget ? 142 : 72;
+  const matrixH = isWidget ? 14 : 65;
+  const cellSize = isWidget ? 5.6 : 9;
   const cols = isWidget ? 25 : 8;
-  const rows = isWidget ? 6 : 7;
+  const rows = isWidget ? 2 : 7;
 
   matrixCtx.clearRect(0, 0, matrixW, matrixH);
   const now = Date.now();
   const t = now * 0.003;
-  const startX = 0;
-  const startY = 0;
+  const startX = 1;
+  const startY = 1;
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const wave1 = Math.sin(c * 0.5 - r * 0.8 + t);
-      const wave2 = Math.cos((c + r) * 0.4 - t * 1.4);
+      const wave1 = Math.sin(c * 0.45 - r * 1.2 + t);
+      const wave2 = Math.cos((c + r) * 0.35 - t * 1.3);
       const noise = (Math.sin(c * 13.98 + r * 79.23 + Math.floor(now / 160)) * 43758.5453) % 1;
       
       const intensity = (wave1 + wave2 + noise * 0.65);
