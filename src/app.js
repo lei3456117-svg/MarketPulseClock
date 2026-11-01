@@ -286,12 +286,12 @@ function applyCanvasDimensions() {
   const dpr = window.devicePixelRatio || 1;
   const isWidget = currentSizeMode === 'widget';
   
-  // 小组件模式下：放大时钟至 142x42 (居中无裁切)，压扁流动矩阵至 142x14 (2行声波光带)
+  // 小组件模式下：时钟再放大至 148x44，点阵秒数进度/无规律流光矩阵 148x12
   // 标准模式下：保持时钟 230x65，右侧矩阵 72x65
-  const clockW = isWidget ? 142 : 230;
-  const clockH = isWidget ? 42 : 65;
-  const matrixW = isWidget ? 142 : 72;
-  const matrixH = isWidget ? 14 : 65;
+  const clockW = isWidget ? 148 : 230;
+  const clockH = isWidget ? 44 : 65;
+  const matrixW = isWidget ? 148 : 72;
+  const matrixH = isWidget ? 12 : 65;
 
   clockCanvas.width = clockW * dpr;
   clockCanvas.height = clockH * dpr;
@@ -311,7 +311,7 @@ function applyCanvasDimensions() {
 // 绘制单点：精准还原原图的纯净哑光点阵面板质感（无强眩光晕影）
 function drawDot(ctx, x, y, brightness, isLit) {
   const isWidget = currentSizeMode === 'widget';
-  const dotSize = isWidget ? 4.8 : 7;
+  const dotSize = isWidget ? 5.0 : 7;
   if (isLit) {
     const alpha = Math.min(1, Math.max(0.15, brightness));
     ctx.fillStyle = currentTheme.lit;
@@ -332,7 +332,7 @@ function drawDot(ctx, x, y, brightness, isLit) {
 function renderDigit(ctx, startX, startY, digitChar, transition) {
   const targetMatrix = FONT_5X7[digitChar] || FONT_5X7['0'];
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 5.6 : 9;
+  const cellSize = isWidget ? 5.85 : 9;
 
   if (transition.progress >= 1) {
     for (let r = 0; r < 7; r++) {
@@ -373,7 +373,7 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
 // 绘制冒号
 function renderColon(ctx, startX, startY, blinkState) {
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 5.6 : 9;
+  const cellSize = isWidget ? 5.85 : 9;
   for (let r = 0; r < 7; r++) {
     const isColonDot = (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
@@ -384,9 +384,9 @@ function renderColon(ctx, startX, startY, blinkState) {
 // 绘制主时钟
 function renderClockCanvas() {
   const isWidget = currentSizeMode === 'widget';
-  const clockW = isWidget ? 142 : 230;
-  const clockH = isWidget ? 42 : 65;
-  const cellSize = isWidget ? 5.6 : 9;
+  const clockW = isWidget ? 148 : 230;
+  const clockH = isWidget ? 44 : 65;
+  const cellSize = isWidget ? 5.85 : 9;
 
   clockCtx.clearRect(0, 0, clockW, clockH);
 
@@ -414,39 +414,83 @@ function renderClockCanvas() {
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 动态矩阵（小组件模式下压扁为 25列 x 2行，呈极简横向声波光带，标准模式下为 8列 x 7行）
+// 动态矩阵：小组件模式下为 30列 x 2行 = 60点「秒数进度与量子微光」矩阵，标准模式下为 8列 x 7行
 function renderDynamicMatrix() {
   const isWidget = currentSizeMode === 'widget';
-  const matrixW = isWidget ? 142 : 72;
-  const matrixH = isWidget ? 14 : 65;
-  const cellSize = isWidget ? 5.6 : 9;
-  const cols = isWidget ? 25 : 8;
+  const matrixW = isWidget ? 148 : 72;
+  const matrixH = isWidget ? 12 : 65;
+  const cellSize = isWidget ? 4.9 : 9;
+  const cols = isWidget ? 30 : 8;
   const rows = isWidget ? 2 : 7;
 
   matrixCtx.clearRect(0, 0, matrixW, matrixH);
-  const now = Date.now();
-  const t = now * 0.003;
+  const now = new Date();
+  const nowMs = now.getTime();
+  const seconds = now.getSeconds();
+  const millis = now.getMilliseconds();
   const startX = 1;
   const startY = 1;
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const wave1 = Math.sin(c * 0.45 - r * 1.2 + t);
-      const wave2 = Math.cos((c + r) * 0.35 - t * 1.3);
-      const noise = (Math.sin(c * 13.98 + r * 79.23 + Math.floor(now / 160)) * 43758.5453) % 1;
-      
-      const intensity = (wave1 + wave2 + noise * 0.65);
-      const isLit = intensity > 0.85;
+  if (isWidget) {
+    // 60点秒数进度体系：第 0~29 秒为上行，第 30~59 秒为下行
+    // 过去已走完的秒数：常亮点
+    // 当前秒（精确到毫秒）：脉冲呼吸发光
+    // 未走到的秒数：无规律量子随机闪烁微光（充满生机科技感）
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 30; c++) {
+        const dotIndex = r * 30 + c; // 0 到 59 秒
+        const x = startX + c * cellSize;
+        const y = startY + r * cellSize;
+        
+        // 独有点尺寸（紧凑精致）
+        const dotW = 3.9;
 
-      let brightness = 0;
-      if (isLit) {
-        brightness = Math.min(1, Math.max(0.25, (intensity - 0.85) * 1.8));
+        if (dotIndex < seconds) {
+          // 已过去秒数：稳定常亮，带极其轻微的能量波动
+          const subtleWave = 0.85 + 0.15 * Math.sin(c * 0.4 + nowMs * 0.002);
+          matrixCtx.fillStyle = currentTheme.lit;
+          matrixCtx.globalAlpha = subtleWave;
+          matrixCtx.fillRect(x, y, dotW, dotW);
+        } else if (dotIndex === seconds) {
+          // 当前秒：随着毫秒流畅呼吸跳动
+          const pulse = 0.4 + 0.6 * (1 - Math.abs(Math.sin((millis / 1000) * Math.PI)));
+          matrixCtx.fillStyle = currentTheme.lit;
+          matrixCtx.globalAlpha = pulse;
+          matrixCtx.fillRect(x, y, dotW, dotW);
+        } else {
+          // 未来秒数：未点亮底色，伴随无规律的随机量子微光掠过
+          const noise = (Math.sin(c * 27.13 + r * 91.71 + Math.floor(nowMs / 140)) * 43758.5453) % 1;
+          const isSparkle = noise > 0.94; // 偶发无规律闪烁
+          if (isSparkle) {
+            matrixCtx.fillStyle = currentTheme.lit;
+            matrixCtx.globalAlpha = 0.35 + 0.4 * Math.random();
+          } else {
+            matrixCtx.fillStyle = currentTheme.unlit;
+            matrixCtx.globalAlpha = 1.0;
+          }
+          matrixCtx.fillRect(x, y, dotW, dotW);
+        }
       }
-
-      const x = startX + c * cellSize;
-      const y = startY + r * cellSize;
-
-      drawDot(matrixCtx, x, y, brightness, isLit);
+    }
+    matrixCtx.globalAlpha = 1.0;
+  } else {
+    // 标准模式 8x7 动态矩阵
+    const t = nowMs * 0.003;
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 8; c++) {
+        const wave1 = Math.sin(c * 0.8 - r * 1.0 + t);
+        const wave2 = Math.cos((c + r) * 0.6 - t * 1.4);
+        const noise = (Math.sin(c * 13.98 + r * 79.23 + Math.floor(nowMs / 160)) * 43758.5453) % 1;
+        const intensity = (wave1 + wave2 + noise * 0.65);
+        const isLit = intensity > 0.85;
+        let brightness = 0;
+        if (isLit) {
+          brightness = Math.min(1, Math.max(0.25, (intensity - 0.85) * 1.8));
+        }
+        const x = startX + c * cellSize;
+        const y = startY + r * cellSize;
+        drawDot(matrixCtx, x, y, brightness, isLit);
+      }
     }
   }
 }
