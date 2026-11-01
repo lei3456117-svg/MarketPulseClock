@@ -184,6 +184,7 @@ function createWindow() {
     resizable: true,
     alwaysOnTop: false,
     skipTaskbar: isWin ? true : false,
+    hiddenInMissionControl: isMac ? true : false, // macOS 桌面小组件特性：防止点击壁纸时窗口自动缩退到屏幕侧边
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -209,6 +210,11 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow(windowOpts);
+
+  // 在 macOS 上将窗口设为所有工作区可见并在全屏时显示，同时固定在桌面上不被台前调度/点按壁纸挤开
+  if (isMac && mainWindow.setVisibleOnAllWorkspaces) {
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
+  }
 
   let moveTimeout = null;
   mainWindow.on('moved', () => {
