@@ -87,21 +87,7 @@ function loadSavedPosition() {
     const file = getWindowStatePath();
     if (fs.existsSync(file)) {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (typeof data.x === 'number' && typeof data.y === 'number') {
-        const displays = screen.getAllDisplays();
-        const onScreen = displays.some(d => {
-          const b = d.bounds;
-          return (
-            data.x >= b.x - 100 &&
-            data.x <= b.x + b.width - 50 &&
-            data.y >= b.y - 50 &&
-            data.y <= b.y + b.height - 50
-          );
-        });
-        if (onScreen) {
-          return { x: data.x, y: data.y };
-        }
-      }
+      return data;
     }
   } catch (e) {
     console.error('Failed to load window position:', e);
@@ -109,15 +95,25 @@ function loadSavedPosition() {
   return null;
 }
 
-function saveWindowPosition() {
+function saveWindowState(extra = {}) {
   if (!mainWindow) return;
   try {
     const [x, y] = mainWindow.getPosition();
+    const bounds = mainWindow.getBounds();
     const file = getWindowStatePath();
-    fs.writeFileSync(file, JSON.stringify({ x, y }), 'utf8');
+    let current = {};
+    if (fs.existsSync(file)) {
+      try { current = JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e){}
+    }
+    const merged = { ...current, x, y, width: bounds.width, height: bounds.height, ...extra };
+    fs.writeFileSync(file, JSON.stringify(merged), 'utf8');
   } catch (e) {
-    console.error('Failed to save window position:', e);
+    console.error('Failed to save window state:', e);
   }
+}
+
+function saveWindowPosition() {
+  saveWindowState();
 }
 
 function snapToNearestEdge() {
@@ -171,10 +167,14 @@ function createWindow() {
   // 默认启动系统托盘图标
   createTray();
 
-  const savedPos = loadSavedPosition();
+  const savedState = loadSavedPosition();
+  const defaultMode = (savedState && savedState.sizeMode) ? savedState.sizeMode : 'widget';
+  const defaultW = defaultMode === 'widget' ? 180 : 360;
+  const defaultH = defaultMode === 'widget' ? 180 : 232;
+
   const windowOpts = {
-    width: 360,
-    height: 232,
+    width: defaultW,
+    height: defaultH,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
@@ -189,9 +189,21 @@ function createWindow() {
     }
   };
 
-  if (savedPos) {
-    windowOpts.x = savedPos.x;
-    windowOpts.y = savedPos.y;
+  if (savedState && typeof savedState.x === 'number' && typeof savedState.y === 'number') {
+    const displays = screen.getAllDisplays();
+    const onScreen = displays.some(d => {
+      const b = d.bounds;
+      return (
+        savedState.x >= b.x - 100 &&
+        savedState.x <= b.x + b.width - 50 &&
+        savedState.y >= b.y - 50 &&
+        savedState.y <= b.y + b.height - 50
+      );
+    });
+    if (onScreen) {
+      windowOpts.x = savedState.x;
+      windowOpts.y = savedState.y;
+    }
   }
 
   mainWindow = new BrowserWindow(windowOpts);
@@ -262,6 +274,14 @@ ipcMain.on('resize-window', (event, { width, height }) => {
     snapToNearestEdge();
     saveWindowPosition();
   }
+});
+
+ipcMain.on('save-size-mode', (event, mode) => {
+  saveWindowState({ sizeMode: mode });
+});
+
+ipcMain.handle('get-saved-state', () => {
+  return loadSavedPosition();
 });
 
 // 开机自启

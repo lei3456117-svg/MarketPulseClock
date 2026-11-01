@@ -389,7 +389,7 @@ html, body {
   border-color: #384250;
 }
 
-/* 设置 / 调色盘抽屉 */
+/* 调色盘与设置抽屉 (🎨) */
 .settings-drawer {
   position: absolute;
   top: 0;
@@ -398,6 +398,171 @@ html, body {
   height: 100%;
   background: var(--bg-color);
   border-radius: 14px;
+  padding: 10px 12px;
+  display: none;
+  flex-direction: column;
+  z-index: 100;
+  -webkit-app-region: no-drag;
+  overflow-y: auto;
+}
+
+/* ============================================================ */
+/* 📱 180×180 桌面小组件模式 (自适应苹果桌面日历小组件比例) */
+/* ============================================================ */
+body.mode-widget .widget-card {
+  border-radius: 22px;
+  padding: 10px 12px 10px 12px;
+  justify-content: space-between;
+}
+
+body.mode-widget .settings-drawer {
+  border-radius: 22px;
+  padding: 10px 12px;
+}
+
+body.mode-widget .title {
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+body.mode-widget .version-badge {
+  display: none;
+}
+
+body.mode-widget .pulse-indicator {
+  display: none;
+}
+
+body.mode-widget .control-btn {
+  font-size: 9px;
+  padding: 1px;
+}
+
+body.mode-widget .header-controls {
+  gap: 5px;
+}
+
+body.mode-widget .widget-header {
+  margin-bottom: 2px;
+}
+
+body.mode-widget .clock-matrix-row {
+  margin-bottom: 2px;
+}
+
+body.mode-widget .pixel-clock-canvas {
+  width: 112px !important;
+  height: 32px !important;
+}
+
+body.mode-widget .dynamic-matrix-canvas {
+  width: 35px !important;
+  height: 32px !important;
+}
+
+body.mode-widget .mid-bar {
+  font-size: 7.5px;
+  margin-bottom: 3px;
+  padding-bottom: 3px;
+}
+
+body.mode-widget .date-timezone {
+  font-size: 7.5px;
+  letter-spacing: 0.8px;
+}
+
+body.mode-widget .module-title {
+  font-size: 7.5px;
+  padding: 1px 3px;
+  max-width: 68px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+body.mode-widget .module-nav-btn {
+  width: 13px;
+  height: 13px;
+  font-size: 8px;
+}
+
+body.mode-widget .module-view {
+  gap: 4px;
+}
+
+body.mode-widget .progress-header {
+  font-size: 7.5px;
+}
+
+body.mode-widget .pixel-bar {
+  height: 3px;
+  gap: 1.5px;
+}
+
+body.mode-widget .stat-row {
+  font-size: 7.5px;
+}
+
+body.mode-widget .stat-label {
+  font-size: 7.5px;
+  gap: 3px;
+}
+
+body.mode-widget .stat-value {
+  font-size: 7.5px;
+}
+
+body.mode-widget .market-code {
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+
+body.mode-widget .market-name {
+  font-size: 7.5px;
+}
+
+body.mode-widget .market-status {
+  font-size: 7.5px;
+}
+
+body.mode-widget .market-time {
+  font-size: 7.5px;
+}
+
+body.mode-widget .market-item {
+  padding: 2px 0;
+}
+
+body.mode-widget .pomo-time-large {
+  font-size: 14px;
+}
+
+body.mode-widget .pomo-btn {
+  font-size: 8px;
+  padding: 2px 5px;
+}
+
+body.mode-widget .pomo-timer-row {
+  gap: 4px;
+}
+
+body.mode-widget .settings-header {
+  font-size: 9px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+body.mode-widget .settings-body {
+  gap: 8px;
+  font-size: 8.5px;
+}
+
+body.mode-widget .theme-chip {
+  height: 22px;
+  font-size: 7.5px;
+}
+
   padding: 14px 16px;
   display: none;
   flex-direction: column;

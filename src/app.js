@@ -216,8 +216,77 @@ let digitTransitions = [
   { from: '0', to: '0', progress: 1, startTime: 0 }
 ];
 
+let currentSizeMode = 'widget'; // 'widget' (180x180) or 'standard' (360x...)
+
+function setSizeMode(mode) {
+  currentSizeMode = mode === 'standard' ? 'standard' : 'widget';
+  if (currentSizeMode === 'widget') {
+    document.body.classList.add('mode-widget');
+    document.body.classList.remove('mode-standard');
+  } else {
+    document.body.classList.remove('mode-widget');
+    document.body.classList.add('mode-standard');
+  }
+
+  const select = document.getElementById('sizeModeSelect');
+  if (select) select.value = currentSizeMode;
+
+  try {
+    localStorage.setItem('pixel_clock_size_mode', currentSizeMode);
+  } catch (e) {}
+
+  if (ipcRenderer) {
+    ipcRenderer.send('save-size-mode', currentSizeMode);
+    applyCurrentWindowSize();
+  }
+
+  applyCanvasDimensions();
+}
+
+function applyCurrentWindowSize() {
+  if (!ipcRenderer) return;
+  const drawer = document.getElementById('settingsDrawer');
+  const isDrawerOpen = drawer && drawer.classList.contains('open');
+
+  if (currentSizeMode === 'widget') {
+    ipcRenderer.send('resize-window', { width: 180, height: 180 });
+  } else {
+    if (isDrawerOpen) {
+      ipcRenderer.send('resize-window', { width: 360, height: 260 });
+    } else {
+      const mod = MODULES[activeModuleIndex];
+      ipcRenderer.send('resize-window', { width: 360, height: mod ? mod.height : 232 });
+    }
+  }
+}
+
+function applyCanvasDimensions() {
+  const dpr = window.devicePixelRatio || 1;
+  const isWidget = currentSizeMode === 'widget';
+  const clockW = isWidget ? 112 : 230;
+  const clockH = isWidget ? 32 : 65;
+  const matrixW = isWidget ? 35 : 72;
+  const matrixH = isWidget ? 32 : 65;
+
+  clockCanvas.width = clockW * dpr;
+  clockCanvas.height = clockH * dpr;
+  clockCanvas.style.width = clockW + 'px';
+  clockCanvas.style.height = clockH + 'px';
+  clockCtx.setTransform(1, 0, 0, 1, 0, 0);
+  clockCtx.scale(dpr, dpr);
+
+  matrixCanvas.width = matrixW * dpr;
+  matrixCanvas.height = matrixH * dpr;
+  matrixCanvas.style.width = matrixW + 'px';
+  matrixCanvas.style.height = matrixH * dpr;
+  matrixCtx.setTransform(1, 0, 0, 1, 0, 0);
+  matrixCtx.scale(dpr, dpr);
+}
+
 // 绘制单点：精准还原原图的纯净哑光点阵面板质感（无强眩光晕影）
 function drawDot(ctx, x, y, brightness, isLit) {
+  const isWidget = currentSizeMode === 'widget';
+  const dotSize = isWidget ? 3.5 : 7;
   if (isLit) {
     const alpha = Math.min(1, Math.max(0.15, brightness));
     ctx.fillStyle = currentTheme.lit;
@@ -230,19 +299,21 @@ function drawDot(ctx, x, y, brightness, isLit) {
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
   }
-  ctx.fillRect(x, y, DOT_SIZE, DOT_SIZE);
+  ctx.fillRect(x, y, dotSize, dotSize);
   ctx.globalAlpha = 1.0;
 }
 
 // 绘制 5x7 数字
 function renderDigit(ctx, startX, startY, digitChar, transition) {
   const targetMatrix = FONT_5X7[digitChar] || FONT_5X7['0'];
+  const isWidget = currentSizeMode === 'widget';
+  const cellSize = isWidget ? 4.5 : 9;
 
   if (transition.progress >= 1) {
     for (let r = 0; r < 7; r++) {
       for (let c = 0; c < 5; c++) {
         const isLit = targetMatrix[r][c] === 1;
-        drawDot(ctx, startX + c * CELL_SIZE, startY + r * CELL_SIZE, 1, isLit);
+        drawDot(ctx, startX + c * cellSize, startY + r * cellSize, 1, isLit);
       }
     }
   } else {
@@ -268,7 +339,7 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
           brightness = (rowProgress - 0.5) * 2;
         }
 
-        drawDot(ctx, startX + c * CELL_SIZE, startY + r * CELL_SIZE, brightness, isLit);
+        drawDot(ctx, startX + c * cellSize, startY + r * cellSize, brightness, isLit);
       }
     }
   }
@@ -276,51 +347,64 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
 
 // 绘制冒号
 function renderColon(ctx, startX, startY, blinkState) {
+  const isWidget = currentSizeMode === 'widget';
+  const cellSize = isWidget ? 4.5 : 9;
   for (let r = 0; r < 7; r++) {
     const isColonDot = (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
-    drawDot(ctx, startX, startY + r * CELL_SIZE, blinkState ? 1 : 0.2, isLit);
+    drawDot(ctx, startX, startY + r * cellSize, blinkState ? 1 : 0.2, isLit);
   }
 }
 
 // 绘制主时钟
 function renderClockCanvas() {
-  clockCtx.clearRect(0, 0, 230, 65);
+  const isWidget = currentSizeMode === 'widget';
+  const clockW = isWidget ? 112 : 230;
+  const clockH = isWidget ? 32 : 65;
+  const cellSize = isWidget ? 4.5 : 9;
 
-  const startY = 1;
+  clockCtx.clearRect(0, 0, clockW, clockH);
+
+  const startY = 0;
   let curX = 0;
 
   // 第1个字符
   renderDigit(clockCtx, curX, startY, currentDigits[0], digitTransitions[0]);
-  curX += 5 * CELL_SIZE + CELL_SIZE;
+  curX += 5 * cellSize + cellSize;
 
   // 第2个字符
   renderDigit(clockCtx, curX, startY, currentDigits[1], digitTransitions[1]);
-  curX += 5 * CELL_SIZE + CELL_SIZE;
+  curX += 5 * cellSize + cellSize;
 
   // 冒号
   const isSecondEven = Math.floor(Date.now() / 500) % 2 === 0;
   renderColon(clockCtx, curX, startY, isSecondEven);
-  curX += CELL_SIZE + CELL_SIZE;
+  curX += cellSize + cellSize;
 
   // 第3个字符
   renderDigit(clockCtx, curX, startY, currentDigits[2], digitTransitions[2]);
-  curX += 5 * CELL_SIZE + CELL_SIZE;
+  curX += 5 * cellSize + cellSize;
 
   // 第4个字符
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 右侧 8x8 动态矩阵
+// 右侧动态矩阵
 function renderDynamicMatrix() {
-  matrixCtx.clearRect(0, 0, 72, 65);
+  const isWidget = currentSizeMode === 'widget';
+  const matrixW = isWidget ? 35 : 72;
+  const matrixH = isWidget ? 32 : 65;
+  const cellSize = isWidget ? 4.5 : 9;
+  const cols = isWidget ? 7 : 8;
+
+  matrixCtx.clearRect(0, 0, matrixW, matrixH);
   const now = Date.now();
   const t = now * 0.003;
   const startX = 0;
-  const startY = 1;
+  const startY = 0;
 
   for (let r = 0; r < 7; r++) {
-    for (let c = 0; c < 8; c++) {
+    for (let c = 0; c < cols; c++) {
       const wave1 = Math.sin(c * 0.8 - r * 1.0 + t);
       const wave2 = Math.cos((c + r) * 0.6 - t * 1.4);
       const noise = (Math.sin(c * 13.98 + r * 79.23 + Math.floor(now / 160)) * 43758.5453) % 1;
@@ -333,8 +417,8 @@ function renderDynamicMatrix() {
         brightness = Math.min(1, Math.max(0.25, (intensity - 0.85) * 1.8));
       }
 
-      const x = startX + c * CELL_SIZE;
-      const y = startY + r * CELL_SIZE;
+      const x = startX + c * cellSize;
+      const y = startY + r * cellSize;
 
       drawDot(matrixCtx, x, y, brightness, isLit);
     }
@@ -384,7 +468,11 @@ function updateDateDisplay(date) {
   const dayNum = date.getDate();
   const tzOffset = -date.getTimezoneOffset() / 60;
   const tzStr = tzOffset >= 0 ? `+${tzOffset}` : `${tzOffset}`;
-  dateEl.textContent = `${dayName}, ${monthName} ${dayNum} · CST ${tzStr}`;
+  if (currentSizeMode === 'widget') {
+    dateEl.textContent = `${dayName} ${monthName} ${dayNum}`;
+  } else {
+    dateEl.textContent = `${dayName}, ${monthName} ${dayNum} · CST ${tzStr}`;
+  }
 }
 
 // -------------------------------------------------------------
@@ -424,7 +512,7 @@ function switchModule(index) {
 
   // 调整窗口大小
   if (ipcRenderer) {
-    ipcRenderer.send('resize-window', { width: 360, height: mod.height });
+    applyCurrentWindowSize();
   }
 
   try {
@@ -449,8 +537,9 @@ function renderPixelBar(containerId, percent, totalSegments = 26) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
-  const litCount = Math.round((percent / 100) * totalSegments);
-  for (let i = 0; i < totalSegments; i++) {
+  const segs = currentSizeMode === 'widget' ? 18 : totalSegments;
+  const litCount = Math.round((percent / 100) * segs);
+  for (let i = 0; i < segs; i++) {
     const cell = document.createElement('div');
     cell.className = `bar-cell ${i < litCount ? 'lit' : ''}`;
     container.appendChild(cell);
@@ -781,23 +870,15 @@ function initSettings() {
 
   if (themeBtn && drawer) {
     themeBtn.addEventListener('click', () => {
-      const isOpen = drawer.classList.toggle('open');
-      if (ipcRenderer) {
-        if (isOpen) {
-          ipcRenderer.send('resize-window', { width: 360, height: 260 });
-        } else {
-          ipcRenderer.send('resize-window', { width: 360, height: MODULES[activeModuleIndex].height });
-        }
-      }
+      drawer.classList.toggle('open');
+      applyCurrentWindowSize();
     });
   }
 
   if (closeBtn && drawer) {
     closeBtn.addEventListener('click', () => {
       drawer.classList.remove('open');
-      if (ipcRenderer) {
-        ipcRenderer.send('resize-window', { width: 360, height: MODULES[activeModuleIndex].height });
-      }
+      applyCurrentWindowSize();
     });
   }
 
@@ -835,6 +916,15 @@ function initSettings() {
     modSelect.value = String(activeModuleIndex);
     modSelect.addEventListener('change', (e) => {
       switchModule(parseInt(e.target.value, 10));
+    });
+  }
+
+  // 尺寸模式切换
+  const sizeSelect = document.getElementById('sizeModeSelect');
+  if (sizeSelect) {
+    sizeSelect.value = currentSizeMode;
+    sizeSelect.addEventListener('change', (e) => {
+      setSizeMode(e.target.value);
     });
   }
 
@@ -921,7 +1011,32 @@ function animationLoop(timeMs) {
 }
 
 // 初始化
+function loadSavedSizeMode() {
+  try {
+    const saved = localStorage.getItem('pixel_clock_size_mode');
+    if (saved) {
+      setSizeMode(saved);
+      return;
+    }
+  } catch (e) {}
+
+  if (ipcRenderer) {
+    ipcRenderer.invoke('get-saved-state').then(state => {
+      if (state && state.sizeMode) {
+        setSizeMode(state.sizeMode);
+      } else {
+        setSizeMode('widget');
+      }
+    }).catch(() => {
+      setSizeMode('widget');
+    });
+  } else {
+    setSizeMode('widget');
+  }
+}
+
 loadSavedTheme();
+loadSavedSizeMode();
 loadSavedModule();
 initPomodoro();
 initSettings();
