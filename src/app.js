@@ -223,6 +223,14 @@ const FONT_5X9 = {
 // 2. 主题调色盘色彩系统
 // -------------------------------------------------------------
 const THEMES = {
+  glass: {
+    bg: 'rgba(28, 32, 42, 0.65)',
+    lit: '#f5f7fa',
+    unlit: 'rgba(255, 255, 255, 0.08)',
+    textMain: '#f0f3f6',
+    textDim: '#8b95a1',
+    accent: '#5dade2'
+  },
   dark: {
     bg: '#0e1011',
     lit: '#ececec',
@@ -265,7 +273,7 @@ const THEMES = {
   }
 };
 
-let currentTheme = { ...THEMES.dark };
+let currentTheme = { ...THEMES.glass };
 
 function applyTheme(themeObj) {
   currentTheme = { ...themeObj };
@@ -291,7 +299,7 @@ function loadSavedTheme() {
       return;
     }
   } catch (e) {}
-  applyTheme(THEMES.dark);
+  applyTheme(THEMES.glass);
 }
 
 // -------------------------------------------------------------
@@ -399,12 +407,12 @@ function applyCanvasDimensions() {
   const dpr = window.devicePixelRatio || 1;
   const isWidget = currentSizeMode === 'widget';
   
-  // 小组件模式下：时钟再大幅放大至 148x58 (5x9大点阵)，压扁秒数流动矩阵 148x18
+  // 小组件模式下：时钟回归 5x7 匀称黄金比例 142x42，加粗 4 行 EQ 律动音频频谱 142x24
   // 标准模式下：保持时钟 230x65，右侧矩阵 72x65
-  const clockW = isWidget ? 148 : 230;
-  const clockH = isWidget ? 58 : 65;
-  const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 18 : 65;
+  const clockW = isWidget ? 142 : 230;
+  const clockH = isWidget ? 42 : 65;
+  const matrixW = isWidget ? 142 : 72;
+  const matrixH = isWidget ? 24 : 65;
 
   clockCanvas.width = clockW * dpr;
   clockCanvas.height = clockH * dpr;
@@ -424,7 +432,7 @@ function applyCanvasDimensions() {
 // 绘制单点：精准还原原图的纯净哑光点阵面板质感（无强眩光晕影）
 function drawDot(ctx, x, y, brightness, isLit) {
   const isWidget = currentSizeMode === 'widget';
-  const dotSize = isWidget ? 5.0 : 7;
+  const dotSize = isWidget ? 4.8 : 7;
   if (isLit) {
     const alpha = Math.min(1, Math.max(0.15, brightness));
     ctx.fillStyle = currentTheme.lit;
@@ -441,13 +449,13 @@ function drawDot(ctx, x, y, brightness, isLit) {
   ctx.globalAlpha = 1.0;
 }
 
-// 绘制数字（小组件模式使用 5x9 高挑大点阵，标准模式使用 5x7）
+// 绘制数字（统一使用经典 5x7 匀称点阵，告别瘦高比例）
 function renderDigit(ctx, startX, startY, digitChar, transition) {
   const isWidget = currentSizeMode === 'widget';
-  const font = isWidget ? FONT_5X9 : FONT_5X7;
-  const numRows = isWidget ? 9 : 7;
+  const font = FONT_5X7;
+  const numRows = 7;
   const targetMatrix = font[digitChar] || font['0'];
-  const cellSize = isWidget ? 5.85 : 9;
+  const cellSize = isWidget ? 5.6 : 9;
 
   if (transition.progress >= 1) {
     for (let r = 0; r < numRows; r++) {
@@ -485,13 +493,12 @@ function renderDigit(ctx, startX, startY, digitChar, transition) {
   }
 }
 
-// 绘制冒号（小组件 5x9 下在第 2 行和第 6 行）
+// 绘制冒号（经典 5x7 在第 2 行和第 4 行）
 function renderColon(ctx, startX, startY, blinkState) {
   const isWidget = currentSizeMode === 'widget';
-  const cellSize = isWidget ? 5.85 : 9;
-  const numRows = isWidget ? 9 : 7;
-  for (let r = 0; r < numRows; r++) {
-    const isColonDot = isWidget ? (r === 2 || r === 6) : (r === 2 || r === 4);
+  const cellSize = isWidget ? 5.6 : 9;
+  for (let r = 0; r < 7; r++) {
+    const isColonDot = (r === 2 || r === 4);
     const isLit = isColonDot && blinkState;
     drawDot(ctx, startX, startY + r * cellSize, blinkState ? 1 : 0.2, isLit);
   }
@@ -500,9 +507,9 @@ function renderColon(ctx, startX, startY, blinkState) {
 // 绘制主时钟
 function renderClockCanvas() {
   const isWidget = currentSizeMode === 'widget';
-  const clockW = isWidget ? 148 : 230;
-  const clockH = isWidget ? 58 : 65;
-  const cellSize = isWidget ? 5.85 : 9;
+  const clockW = isWidget ? 142 : 230;
+  const clockH = isWidget ? 42 : 65;
+  const cellSize = isWidget ? 5.6 : 9;
 
   clockCtx.clearRect(0, 0, clockW, clockH);
 
@@ -530,14 +537,14 @@ function renderClockCanvas() {
   renderDigit(clockCtx, curX, startY, currentDigits[3], digitTransitions[3]);
 }
 
-// 动态矩阵：小组件模式下为 30列 x 3行 (18px)「秒数进度与量子微光」矩阵，标准模式下为 8列 x 7行
+// 动态矩阵：小组件模式下为【加粗 4 行音频 EQ 频谱跳动 (方案 A)】，标准模式下为 8列 x 7行
 function renderDynamicMatrix() {
   const isWidget = currentSizeMode === 'widget';
-  const matrixW = isWidget ? 148 : 72;
-  const matrixH = isWidget ? 18 : 65;
-  const cellSize = isWidget ? 4.9 : 9;
-  const cols = isWidget ? 30 : 8;
-  const rows = isWidget ? 2 : 7;
+  const matrixW = isWidget ? 142 : 72;
+  const matrixH = isWidget ? 24 : 65;
+  const cellSize = isWidget ? 5.6 : 9;
+  const cols = isWidget ? 25 : 8;
+  const rows = isWidget ? 4 : 7;
 
   matrixCtx.clearRect(0, 0, matrixW, matrixH);
   const now = new Date();
@@ -545,41 +552,41 @@ function renderDynamicMatrix() {
   const seconds = now.getSeconds();
   const millis = now.getMilliseconds();
   const startX = 1;
-  const startY = 2;
+  const startY = 1;
 
   if (isWidget) {
-    // 60点秒数进度体系：第 0~29 秒为上行，第 30~59 秒为下行
-    for (let r = 0; r < 2; r++) {
-      for (let c = 0; c < 30; c++) {
-        const dotIndex = r * 30 + c; // 0 到 59 秒
-        const x = startX + c * cellSize;
-        const y = startY + r * 6.5; // 间距更舒适
-        
-        const dotW = 4.0;
+    // 方案 A：加粗 4 行音频 EQ 跳动频谱（25 根频柱）
+    // 柱子高度 0~4，基于时间、正弦叠加波与非线性噪点实时生成，生动无规律跳跃
+    const t = nowMs * 0.0035;
+    for (let c = 0; c < 25; c++) {
+      // 复合声波叠加
+      const wave1 = Math.sin(c * 0.65 + t * 2.2);
+      const wave2 = Math.cos(c * 1.1 - t * 1.6);
+      const wave3 = Math.sin((c + seconds) * 0.4 + t * 0.8);
+      const noise = (Math.sin(c * 43.17 + Math.floor(nowMs / 80)) * 43758.5453) % 1;
+      
+      const rawVal = (wave1 * 0.4 + wave2 * 0.35 + wave3 * 0.25 + noise * 0.3);
+      // 映射到柱高 1 到 4
+      const columnHeight = Math.max(1, Math.min(4, Math.floor((rawVal + 1) * 2.1)));
 
-        if (dotIndex < seconds) {
-          // 已过去秒数：常亮
-          const subtleWave = 0.85 + 0.15 * Math.sin(c * 0.4 + nowMs * 0.002);
+      const x = startX + c * cellSize;
+      const dotW = 4.6; // 加粗点阵颗粒
+
+      for (let r = 0; r < 4; r++) {
+        // 从底往上点亮：r=3是最底层, r=0是最高层
+        const barLevelFromBottom = 4 - r; // 1 to 4
+        const y = startY + r * 5.6;
+
+        if (barLevelFromBottom <= columnHeight) {
+          // 点亮部分
+          const isPeak = barLevelFromBottom === columnHeight;
           matrixCtx.fillStyle = currentTheme.lit;
-          matrixCtx.globalAlpha = subtleWave;
-          matrixCtx.fillRect(x, y, dotW, dotW);
-        } else if (dotIndex === seconds) {
-          // 当前秒：毫秒平滑呼吸跳动
-          const pulse = 0.4 + 0.6 * (1 - Math.abs(Math.sin((millis / 1000) * Math.PI)));
-          matrixCtx.fillStyle = currentTheme.lit;
-          matrixCtx.globalAlpha = pulse;
+          matrixCtx.globalAlpha = isPeak ? 1.0 : 0.82;
           matrixCtx.fillRect(x, y, dotW, dotW);
         } else {
-          // 未来秒数：未点亮底色，伴随无规律的随机微弱量子闪烁
-          const noise = (Math.sin(c * 27.13 + r * 91.71 + Math.floor(nowMs / 130)) * 43758.5453) % 1;
-          const isSparkle = noise > 0.93;
-          if (isSparkle) {
-            matrixCtx.fillStyle = currentTheme.lit;
-            matrixCtx.globalAlpha = 0.35 + 0.4 * Math.random();
-          } else {
-            matrixCtx.fillStyle = currentTheme.unlit;
-            matrixCtx.globalAlpha = 1.0;
-          }
+          // 未点亮底色
+          matrixCtx.fillStyle = currentTheme.unlit;
+          matrixCtx.globalAlpha = 1.0;
           matrixCtx.fillRect(x, y, dotW, dotW);
         }
       }
@@ -1223,6 +1230,19 @@ if (ipcRenderer) {
         document.body.classList.add('mode-standard');
         const select = document.getElementById('sizeModeSelect');
         if (select) select.value = 'standard';
+        const midBar = document.getElementById('midBar');
+        const modContainer = document.getElementById('moduleContainer');
+        const miniFooter = document.getElementById('widgetMiniFooter');
+        if (miniFooter) miniFooter.style.display = 'none';
+        const mod = MODULES[activeModuleIndex];
+        if (mod && mod.id === 'modMinimal') {
+          if (modContainer) modContainer.style.display = 'none';
+          if (midBar) { midBar.style.display = 'flex'; midBar.style.marginBottom = '0px'; }
+        } else {
+          if (modContainer) modContainer.style.display = 'flex';
+          if (midBar) { midBar.style.display = 'flex'; midBar.style.marginBottom = '10px'; }
+        }
+        try { localStorage.setItem('pixel_clock_size_mode', 'standard'); } catch (err) {}
         applyCanvasDimensions();
       }
     } else {
@@ -1232,6 +1252,13 @@ if (ipcRenderer) {
         document.body.classList.remove('mode-standard');
         const select = document.getElementById('sizeModeSelect');
         if (select) select.value = 'widget';
+        const midBar = document.getElementById('midBar');
+        const modContainer = document.getElementById('moduleContainer');
+        const miniFooter = document.getElementById('widgetMiniFooter');
+        if (midBar) midBar.style.display = 'none';
+        if (modContainer) modContainer.style.display = 'none';
+        if (miniFooter) miniFooter.style.display = 'flex';
+        try { localStorage.setItem('pixel_clock_size_mode', 'widget'); } catch (err) {}
         applyCanvasDimensions();
       }
     }

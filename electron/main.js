@@ -223,8 +223,10 @@ function createWindow() {
 
   let moveTimeout = null;
   mainWindow.on('moved', () => {
+    // 立即保存当前位置到磁盘，杜绝退出/关机后位置丢失
+    saveWindowPosition();
     clearTimeout(moveTimeout);
-    // 增加防抖延迟至 350ms，确保用户松开鼠标停止拖拽后才吸附，拖动过程中完全丝滑不卡手
+    // 增加防抖延迟至 350ms，确保用户松开鼠标停止拖拽后才吸附边缘
     moveTimeout = setTimeout(() => {
       snapToNearestEdge();
       saveWindowPosition();

@@ -1,11 +1,11 @@
 :root {
-  --bg-color: #0e1011;
-  --grid-line: rgba(255, 255, 255, 0.02);
-  --border-color: #1a1e22;
-  --text-main: #c8cdd3;
-  --text-dim: #5c636a;
+  --bg-color: rgba(28, 32, 42, 0.68);
+  --grid-line: rgba(255, 255, 255, 0.03);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --text-main: #f0f3f6;
+  --text-dim: #8b95a1;
   --dot-lit: #ececec;
-  --dot-unlit: #1c1f23;
+  --dot-unlit: rgba(255, 255, 255, 0.08);
   --accent: #d84a36;
 }
 
@@ -28,6 +28,8 @@ html, body {
   width: 100%;
   height: 100%;
   background-color: var(--bg-color);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   background-image: 
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
@@ -40,7 +42,8 @@ html, body {
   color: var(--text-main);
   position: relative;
   -webkit-app-region: drag;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* 顶部标题栏 */
@@ -458,20 +461,20 @@ body.mode-widget .clock-matrix-row {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   margin-top: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 body.mode-widget .pixel-clock-canvas {
-  width: 148px !important;
-  height: 58px !important;
+  width: 142px !important;
+  height: 42px !important;
   margin: 0 auto;
 }
 
 body.mode-widget .dynamic-matrix-canvas {
-  width: 148px !important;
-  height: 18px !important;
+  width: 142px !important;
+  height: 24px !important;
   margin: 0 auto;
 }
 
