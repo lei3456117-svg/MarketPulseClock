@@ -82,6 +82,21 @@ function getWindowStatePath() {
   return path.join(app.getPath('userData'), 'window-state.json');
 }
 
+// 获取显示器特征键名（内置屏 vs 外接屏）
+function getDisplayProfileKey(display) {
+  if (!display) return 'default';
+  // 判定是否为 Mac 内置显示器 (通过 internal 标志或 1470x956 / 2560x1664 逻辑尺寸)
+  const isInternal = display.internal || 
+    (display.bounds && display.bounds.width === 1470 && display.bounds.height === 956) ||
+    (display.bounds && display.bounds.x === 0 && display.bounds.y === 0 && screen.getAllDisplays().length === 1);
+  
+  if (isInternal) {
+    return 'builtin';
+  }
+  // 外接屏根据分辨率和 id 区分
+  return `external_${display.bounds.width}x${display.bounds.height}`;
+}
+
 function loadSavedPosition() {
   try {
     const file = getWindowStatePath();
@@ -107,8 +122,9 @@ function saveWindowState(extra = {}) {
       try { current = JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e){}
     }
 
-    // 计算相对所在屏幕的位置比例 (自适应多屏/切换主屏/拔插外接屏)
+    const profiles = current.displayProfiles || {};
     let displayInfo = null;
+
     if (display) {
       const wa = display.workArea;
       const relX = (x - wa.x) / (wa.width > 0 ? wa.width : 1);
@@ -120,6 +136,18 @@ function saveWindowState(extra = {}) {
         relX: Math.max(0, Math.min(1, relX)),
         relY: Math.max(0, Math.min(1, relY))
       };
+
+      // 按显示器独立记忆
+      const profileKey = getDisplayProfileKey(display);
+      profiles[profileKey] = {
+        x,
+        y,
+        width: bounds.width,
+        height: bounds.height,
+        relX: displayInfo.relX,
+        relY: displayInfo.relY,
+        updatedAt: Date.now()
+      };
     }
 
     const merged = {
@@ -129,12 +157,57 @@ function saveWindowState(extra = {}) {
       width: bounds.width,
       height: bounds.height,
       displayInfo,
+      displayProfiles: profiles,
       ...extra
     };
     fs.writeFileSync(file, JSON.stringify(merged), 'utf8');
   } catch (e) {
     console.error('Failed to save window state:', e);
   }
+}
+
+// 屏幕变动/插拔自适应纠偏：切换到当前屏幕的专属记忆坐标
+function switchDisplayProfile() {
+  if (!mainWindow) return;
+  const savedState = loadSavedPosition();
+  const displays = screen.getAllDisplays();
+  if (displays.length === 0) return;
+
+  const primary = screen.getPrimaryDisplay();
+  const targetKey = getDisplayProfileKey(primary);
+  const profiles = (savedState && savedState.displayProfiles) ? savedState.displayProfiles : {};
+  const currentBounds = mainWindow.getBounds();
+
+  let targetX, targetY;
+
+  if (profiles[targetKey]) {
+    // 命中当前显示器的专属记忆坐标
+    targetX = profiles[targetKey].x;
+    targetY = profiles[targetKey].y;
+  } else if (targetKey === 'builtin') {
+    // 内置屏幕未配置时的默认黄金小组件位置（对齐系统日历小组件下方）
+    targetX = primary.workArea.x + 13;
+    targetY = primary.workArea.y + 196; // 33 + 196 = 229px
+  } else {
+    // 外接屏未配置时，默认按比例从内置屏映射
+    const wa = primary.workArea;
+    const relX = (savedState && savedState.displayInfo && typeof savedState.displayInfo.relX === 'number') 
+      ? savedState.displayInfo.relX : 0.01;
+    const relY = (savedState && savedState.displayInfo && typeof savedState.displayInfo.relY === 'number') 
+      ? savedState.displayInfo.relY : 0.22;
+    targetX = Math.round(wa.x + relX * (wa.width - currentBounds.width));
+    targetY = Math.round(wa.y + relY * (wa.height - currentBounds.height));
+  }
+
+  // 严格约束在当前主屏可视工作区内部
+  const wa = primary.workArea;
+  const maxX = wa.x + wa.width - currentBounds.width;
+  const maxY = wa.y + wa.height - currentBounds.height;
+  const clampedX = Math.max(wa.x, Math.min(maxX, targetX));
+  const clampedY = Math.max(wa.y, Math.min(maxY, targetY));
+
+  mainWindow.setPosition(clampedX, clampedY);
+  saveWindowState();
 }
 
 // 屏幕变动/插拔自适应约束：确保窗口始终在可视区域内
@@ -149,15 +222,16 @@ function ensureWindowVisible(savedState = null) {
   const isTargetValid = displays.some(d => d.id === targetDisplay.id);
 
   if (!isTargetValid) {
-    // 原显示器已断开，回退到主显示器
-    targetDisplay = screen.getPrimaryDisplay();
+    // 原显示器已断开，执行按屏幕 Profile 恢复
+    switchDisplayProfile();
+    return;
   }
 
   const wa = targetDisplay.workArea;
   let targetX = bounds.x;
   let targetY = bounds.y;
 
-  // 如果原本窗口完全不在任何屏幕的合理可见区，或者传入了带相对坐标的 savedState
+  // 如果原本窗口完全不在任何屏幕的合理可见区
   const isVisibleOnAny = displays.some(d => {
     const b = d.bounds;
     return (
@@ -169,15 +243,8 @@ function ensureWindowVisible(savedState = null) {
   });
 
   if (!isVisibleOnAny) {
-    if (savedState && savedState.displayInfo && typeof savedState.displayInfo.relX === 'number') {
-      // 用比例映射到当前屏幕
-      targetX = Math.round(wa.x + savedState.displayInfo.relX * wa.width);
-      targetY = Math.round(wa.y + savedState.displayInfo.relY * wa.height);
-    } else {
-      // 默认安全位置：屏幕左侧（偏向小组件常驻区域）
-      targetX = wa.x + 16;
-      targetY = wa.y + 36;
-    }
+    switchDisplayProfile();
+    return;
   }
 
   // 刚性边界约束：确保窗口 100% 完整落在 targetDisplay 的 workArea 内部
@@ -273,7 +340,15 @@ function createWindow() {
     }
   };
 
-  if (savedState && typeof savedState.x === 'number' && typeof savedState.y === 'number') {
+  // 根据当前屏幕的专属 profile 恢复坐标
+  const primary = screen.getPrimaryDisplay();
+  const currentKey = getDisplayProfileKey(primary);
+  const profiles = (savedState && savedState.displayProfiles) ? savedState.displayProfiles : {};
+
+  if (profiles[currentKey] && typeof profiles[currentKey].x === 'number') {
+    windowOpts.x = profiles[currentKey].x;
+    windowOpts.y = profiles[currentKey].y;
+  } else if (savedState && typeof savedState.x === 'number' && typeof savedState.y === 'number') {
     const displays = screen.getAllDisplays();
     // 寻找保存坐标落在哪台已连接显示器内
     const matchedDisplay = displays.find(d => {
@@ -287,21 +362,19 @@ function createWindow() {
     });
 
     if (matchedDisplay) {
-      // 屏幕依然存在，直接恢复
       windowOpts.x = savedState.x;
       windowOpts.y = savedState.y;
     } else {
-      // 外接屏已断开或坐标越界，自适应映射到当前主屏
-      const primary = screen.getPrimaryDisplay();
+      // 首次从外接屏切到内置屏，使用内置屏规范位置 (日历小组件下方)
       const pwa = primary.workArea;
-      if (savedState.displayInfo && typeof savedState.displayInfo.relX === 'number') {
-        windowOpts.x = Math.round(pwa.x + savedState.displayInfo.relX * (pwa.width - defaultW));
-        windowOpts.y = Math.round(pwa.y + savedState.displayInfo.relY * (pwa.height - defaultH));
-      } else {
-        windowOpts.x = pwa.x + 16;
-        windowOpts.y = pwa.y + 36;
-      }
+      windowOpts.x = pwa.x + 13;
+      windowOpts.y = pwa.y + 196;
     }
+  } else {
+    // 默认初始位置：紧贴日历小组件下方
+    const pwa = primary.workArea;
+    windowOpts.x = pwa.x + 13;
+    windowOpts.y = pwa.y + 196;
   }
 
   mainWindow = new BrowserWindow(windowOpts);
@@ -456,10 +529,10 @@ app.whenReady().then(() => {
 
   // 监听显示器拔插与分辨率变动事件，动态自适应纠偏窗口
   screen.on('display-removed', () => {
-    ensureWindowVisible();
+    switchDisplayProfile();
   });
   screen.on('display-added', () => {
-    ensureWindowVisible();
+    switchDisplayProfile();
   });
   screen.on('display-metrics-changed', () => {
     ensureWindowVisible();
