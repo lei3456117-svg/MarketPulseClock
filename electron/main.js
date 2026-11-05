@@ -251,7 +251,7 @@ function createWindow() {
   const defaultMode = (savedState && savedState.sizeMode) ? savedState.sizeMode : 'widget';
   const defaultW = defaultMode === 'widget' ? 164 : (savedState && savedState.width ? savedState.width : 360);
   const defaultH = defaultMode === 'widget' ? 164 : (savedState && savedState.height ? savedState.height : 232);
-  const defaultPin = (savedState && typeof savedState.alwaysOnTop === 'boolean') ? savedState.alwaysOnTop : true; // 默认像 macOS 小组件一样常驻桌面
+  const defaultPin = (savedState && typeof savedState.alwaysOnTop === 'boolean') ? savedState.alwaysOnTop : false; // 默认像桌面日历小组件一样固定在桌面底层，不遮挡日常软件
 
   const windowOpts = {
     width: defaultW,
@@ -265,7 +265,7 @@ function createWindow() {
     resizable: true,
     alwaysOnTop: defaultPin,
     skipTaskbar: isWin ? true : false,
-    hiddenInMissionControl: isMac ? true : false,
+    hiddenInMissionControl: isMac ? true : false, // 防止点按桌面壁纸显示桌面时时钟被系统挤出屏幕
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -309,9 +309,11 @@ function createWindow() {
 
   if (defaultPin) {
     mainWindow.setAlwaysOnTop(true, 'floating', 1);
+  } else {
+    mainWindow.setAlwaysOnTop(false);
   }
 
-  // 在 macOS 上将窗口设为所有工作区可见并在全屏时显示，同时固定在桌面上不被台前调度/点按壁纸挤开
+  // 在 macOS 上固定在桌面上：所有桌面空间可见、全屏空间可见，且不被台前调度/点按壁纸挤开
   if (isMac && mainWindow.setVisibleOnAllWorkspaces) {
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
   }
@@ -357,9 +359,13 @@ function createWindow() {
 ipcMain.on('toggle-always-on-top', (event) => {
   if (!mainWindow) return;
   const isTop = !mainWindow.isAlwaysOnTop();
-  mainWindow.setAlwaysOnTop(isTop, 'floating', 1);
+  if (isTop) {
+    mainWindow.setAlwaysOnTop(true, 'floating', 1);
+  } else {
+    mainWindow.setAlwaysOnTop(false);
+  }
   if (mainWindow.setVisibleOnAllWorkspaces) {
-    mainWindow.setVisibleOnAllWorkspaces(isTop, { visibleOnFullScreen: true });
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
   }
   saveWindowState({ alwaysOnTop: isTop });
   event.reply('always-on-top-changed', isTop);

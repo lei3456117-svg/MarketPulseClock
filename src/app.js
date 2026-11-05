@@ -1206,17 +1206,18 @@ if (ipcRenderer) {
 
   if (pinBtn) {
     pinBtn.addEventListener('click', () => ipcRenderer.send('toggle-always-on-top'));
+
+    // 初始化置顶图标状态 (默认不置顶，作为纯净桌面小组件)
+    ipcRenderer.invoke('get-saved-state').then(state => {
+      const isTop = (state && typeof state.alwaysOnTop === 'boolean') ? state.alwaysOnTop : false;
+      pinBtn.classList.toggle('active', isTop);
+      pinBtn.setAttribute('title', isTop ? '当前已置顶悬浮 (点击还原为桌面小组件)' : '当前为桌面小组件 (点击切换为置顶悬浮)');
+    }).catch(() => {});
+
     ipcRenderer.on('always-on-top-changed', (e, isTop) => {
       pinBtn.classList.toggle('active', isTop);
-      pinBtn.setAttribute('title', isTop ? '当前已常驻桌面 (点击取消置顶)' : '点击开启常驻桌面');
+      pinBtn.setAttribute('title', isTop ? '当前已置顶悬浮 (点击还原为桌面小组件)' : '当前为桌面小组件 (点击切换为置顶悬浮)');
     });
-
-    // 初始化置顶图标状态
-    ipcRenderer.invoke('get-saved-state').then(state => {
-      const isTop = (state && typeof state.alwaysOnTop === 'boolean') ? state.alwaysOnTop : true;
-      pinBtn.classList.toggle('active', isTop);
-      pinBtn.setAttribute('title', isTop ? '当前已常驻桌面 (点击取消置顶)' : '点击开启常驻桌面');
-    }).catch(() => {});
   }
   if (minBtn) minBtn.addEventListener('click', () => ipcRenderer.send('minimize-window'));
   if (closeBtn) closeBtn.addEventListener('click', () => ipcRenderer.send('close-window'));
