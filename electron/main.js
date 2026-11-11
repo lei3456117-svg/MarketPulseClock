@@ -85,16 +85,29 @@ function getWindowStatePath() {
 // 获取显示器特征键名（内置屏 vs 外接屏）
 function getDisplayProfileKey(display) {
   if (!display) return 'default';
-  // 判定是否为 Mac 内置显示器 (通过 internal 标志或 1470x956 / 2560x1664 逻辑尺寸)
-  const isInternal = display.internal || 
-    (display.bounds && display.bounds.width === 1470 && display.bounds.height === 956) ||
-    (display.bounds && display.bounds.x === 0 && display.bounds.y === 0 && screen.getAllDisplays().length === 1);
   
-  if (isInternal) {
+  // 1. Electron 原生属性：display.internal 明确标识是否为 Mac 内置显示屏 (基于系统 CGDisplayIsBuiltin)
+  if (typeof display.internal === 'boolean') {
+    return display.internal ? 'builtin' : `external_${display.bounds.width}x${display.bounds.height}`;
+  }
+
+  // 2. 兜底判定：仅当尺寸符合已知 MacBook 内置屏幕规格且非标准外接比例时才算内置
+  const b = display.bounds || {};
+  const isMacBookRetina = (
+    (b.width === 1470 && b.height === 956) ||
+    (b.width === 1512 && b.height === 982) ||
+    (b.width === 1728 && b.height === 1117) ||
+    (b.width === 1800 && b.height === 1169) ||
+    (b.width === 2560 && b.height === 1664) ||
+    (b.width === 1440 && b.height === 900)
+  );
+
+  if (isMacBookRetina) {
     return 'builtin';
   }
-  // 外接屏根据分辨率和 id 区分
-  return `external_${display.bounds.width}x${display.bounds.height}`;
+
+  // 3. 其它所有情况（如 2560x1440, 1920x1080, 4K 等）均为外接屏，严禁单凭单屏幕或 (0,0) 假定为 builtin
+  return `external_${b.width || 0}x${b.height || 0}`;
 }
 
 function loadSavedPosition() {
@@ -341,13 +354,25 @@ function createWindow() {
   };
 
   // 根据当前屏幕的专属 profile 恢复坐标
+  const displays = screen.getAllDisplays();
   const primary = screen.getPrimaryDisplay();
   const currentKey = getDisplayProfileKey(primary);
   const profiles = (savedState && savedState.displayProfiles) ? savedState.displayProfiles : {};
 
-  if (profiles[currentKey] && typeof profiles[currentKey].x === 'number') {
-    windowOpts.x = profiles[currentKey].x;
-    windowOpts.y = profiles[currentKey].y;
+  let targetProfile = profiles[currentKey];
+  if (!targetProfile) {
+    for (const d of displays) {
+      const k = getDisplayProfileKey(d);
+      if (profiles[k] && typeof profiles[k].x === 'number') {
+        targetProfile = profiles[k];
+        break;
+      }
+    }
+  }
+
+  if (targetProfile && typeof targetProfile.x === 'number') {
+    windowOpts.x = targetProfile.x;
+    windowOpts.y = targetProfile.y;
   } else if (savedState && typeof savedState.x === 'number' && typeof savedState.y === 'number') {
     const displays = screen.getAllDisplays();
     // 寻找保存坐标落在哪台已连接显示器内
