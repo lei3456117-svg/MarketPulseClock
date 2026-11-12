@@ -283,7 +283,7 @@ function snapToNearestEdge() {
   if (!display) return;
   const workArea = display.workArea;
 
-  const SNAP_THRESHOLD = 12; // 降低吸附吸力阈值，避免拖拽时像磁铁一样拖不动
+  const SNAP_THRESHOLD = 6; // 仅贴近极限边缘时吸附，避免误吸附 13~16px 原生小组件边距
   let newX = bounds.x;
   let newY = bounds.y;
   let snapped = false;
@@ -554,10 +554,12 @@ app.whenReady().then(() => {
 
   // 监听显示器拔插与分辨率变动事件，动态自适应纠偏窗口
   screen.on('display-removed', () => {
-    switchDisplayProfile();
+    // 拔出屏幕时：仅当窗口所在的屏幕被移除时才切换 Profile，原屏幕未拔时保持不动
+    ensureWindowVisible();
   });
   screen.on('display-added', () => {
-    switchDisplayProfile();
+    // 接入新屏幕时：当前屏幕依然有效，绝不干扰当前屏幕上的窗口位置
+    ensureWindowVisible();
   });
   screen.on('display-metrics-changed', () => {
     ensureWindowVisible();
