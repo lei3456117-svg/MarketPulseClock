@@ -13,7 +13,10 @@ function createTray() {
     : path.join(__dirname, '../assets/tray-win.png');
   try {
     tray = new Tray(iconPath);
-    tray.setToolTip('像素时钟');
+    // macOS 顶部菜单栏不设原生 Tooltip（macOS 原生无此交互规范，且 Electron 在 Mac 状态栏触发的 Tooltip 气泡极易残留卡死在桌面上）
+    if (!isMac) {
+      tray.setToolTip('像素时钟');
+    }
 
     const updateTrayMenu = () => {
       const isTop = mainWindow ? mainWindow.isAlwaysOnTop() : false;
